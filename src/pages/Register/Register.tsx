@@ -1,24 +1,19 @@
-import { useState } from "react";
 import { RegisterFormAtleta } from "./components/RegisterFormAtleta";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
   CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RegisterFormCoach } from "./components/RegisterFormCoach";
 import { Link } from "react-router";
 export default function Register() {
-  const [selectedRole, setSelectedRole] = useState("athlete");
 
   return (
-    <main className="flex flex-col gap-y-16 items-center justify-center max-w-2xl mx-auto h-screen">
+    <main className="flex flex-col gap-y-16 items-center justify-center max-w-2xl mx-auto h-full my-20">
       <h1 className="text-5xl font-bold text-primary">Registrarse</h1>
 
       <Tabs defaultValue="athlete" className="w-full">

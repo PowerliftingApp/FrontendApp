@@ -14,27 +14,24 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Link, useNavigate } from "react-router";
+import { useNavigate } from "react-router";
 
 import { useState } from "react";
-import { LoginFormSchema } from "../schemas/LoginForm.schema";
-import { Label } from "@/components/ui/label";
+import { PasswordRecoverySchema } from "../schemas/PasswordRecovery.schema";
 
-export function LoginForm() {
-  const form = useForm<z.infer<typeof LoginFormSchema>>({
-    resolver: zodResolver(LoginFormSchema),
+export function PasswordRecoveryForm() {
+  const form = useForm<z.infer<typeof PasswordRecoverySchema>>({
+    resolver: zodResolver(PasswordRecoverySchema),
     defaultValues: {
       email: "",
-      password: "",
     },
   });
 
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
 
-  async function onSubmit(data: z.infer<typeof LoginFormSchema>) {
+  async function onSubmit(data: z.infer<typeof PasswordRecoverySchema>) {
     console.log(data);
-    navigate("/dashboard");
   }
 
   return (
@@ -57,27 +54,8 @@ export function LoginForm() {
               </FormItem>
             )}
           />
-          <FormField
-            control={form.control}
-            name="password"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Contraseña</FormLabel>
-                <FormControl>
-                  <Input placeholder="********" type="password" {...field} />
-                </FormControl>
-                <FormMessage />
-                <Link to="/password-recovery">
-                  <Label className="text-gray-400 hover:underline cursor-pointer items-end justify-self-end mt-2">
-                    Olvidé mi contraseña
-                  </Label>
-                </Link>
-              </FormItem>
-            )}
-          />
-
           <LoadingButton loading={isLoading} type="submit" className="w-full">
-            Iniciar sesión
+            Recuperar contraseña
           </LoadingButton>
         </form>
       </Form>
