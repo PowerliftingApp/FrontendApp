@@ -19,6 +19,10 @@ import { useNavigate } from "react-router";
 import { useState } from "react";
 import { RegisterFormAtletaSchema } from "../schemas/RegisterForm.schema";
 
+import axios from "axios";
+import { toast } from "sonner";
+import { set } from "date-fns";
+
 export function RegisterFormAtleta() {
   const form = useForm<z.infer<typeof RegisterFormAtletaSchema>>({
     resolver: zodResolver(RegisterFormAtletaSchema),
@@ -34,7 +38,33 @@ export function RegisterFormAtleta() {
 
   // Extraer la logica de esta funcion a un hook o servicio separado
   async function onSubmit(data: z.infer<typeof RegisterFormAtletaSchema>) {
-    console.log(data);
+    setIsLoading(true);
+
+    const newUser = {
+      ...data,
+      role: "athlete",
+    };
+
+    try {
+      const response = await axios.post(
+        import.meta.env.VITE_API_URL + "users/register",
+        newUser
+      );
+
+      if (response.status === 201) {
+        toast.success(
+          "Usuario registrado correctamente. Por favor, revisa tu correo para activar la cuenta."
+        );
+        // navigate("/login");
+      }
+    } catch (error: any) {
+      console.error(error);
+      toast.error("Ha ocurrido un error al registrar el usuario", {
+        description: error.response.data.message,
+      });
+    }
+
+    setIsLoading(false);
   }
 
   return (
@@ -97,7 +127,7 @@ export function RegisterFormAtleta() {
         />
         <FormField
           control={form.control}
-          name="coachId"
+          name="coach"
           render={({ field }) => (
             <FormItem className="col-span-full">
               <FormLabel>ID de entrenador</FormLabel>

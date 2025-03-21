@@ -16,7 +16,7 @@ export const RegisterFormAtletaSchema = z
           "La contraseña debe incluir al menos una mayúscula, un número y un carácter especial",
       }),
     passwordConfirmation: z.string(),
-    coachId: z.string().optional(),
+    coach: z.string().optional(),
   })
   .refine((data) => data.password === data.passwordConfirmation, {
     message: "Las contraseñas no coinciden",

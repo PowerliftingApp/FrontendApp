@@ -18,6 +18,8 @@ import { useNavigate } from "react-router";
 
 import { useState } from "react";
 import { RegisterFormCoachSchema } from "../schemas/RegisterForm.schema";
+import axios from "axios";
+import { toast } from "sonner";
 
 export function RegisterFormCoach() {
   const form = useForm<z.infer<typeof RegisterFormCoachSchema>>({
@@ -34,7 +36,33 @@ export function RegisterFormCoach() {
 
   // Extraer la logica de esta funcion a un hook o servicio separado
   async function onSubmit(data: z.infer<typeof RegisterFormCoachSchema>) {
-    console.log(data);
+    setIsLoading(true);
+
+    const newUser = {
+      ...data,
+      role: "coach",
+    };
+
+    try {
+      const response = await axios.post(
+        import.meta.env.VITE_API_URL + "users/register",
+        newUser
+      );
+
+      if (response.status === 201) {
+        toast.success(
+          "Usuario registrado correctamente. Por favor, revisa tu correo para activar la cuenta."
+        );
+        // navigate("/login");
+      }
+    } catch (error: any) {
+      console.error(error);
+      toast.error("Ha ocurrido un error al registrar el usuario", {
+        description: error.response.data.message,
+      });
+    }
+
+    setIsLoading(false);
   }
 
   return (
