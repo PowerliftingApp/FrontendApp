@@ -53,7 +53,7 @@ export function RegisterFormCoach() {
         toast.success(
           "Usuario registrado correctamente. Por favor, revisa tu correo para activar la cuenta."
         );
-        // navigate("/login");
+        
       }
     } catch (error: any) {
       console.error(error);

@@ -8,6 +8,7 @@ import Login from "./pages/Login/Login.tsx";
 import "./index.css";
 import PasswordRecovery from "./pages/PasswordRecovery/PasswordRecovery.tsx";
 import { Toaster } from "./components/ui/sonner.tsx";
+import VerifyAccount from "./pages/VerifyAccount/VerifyAccount.tsx";
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
@@ -22,7 +23,7 @@ createRoot(document.getElementById("root")!).render(
       <Routes>
         <Route path="/" element={<Login />} />
         <Route path="/register" element={<Register />} />
-        <Route path="/account-verification" element={<Register />} />
+        <Route path="/activate-account/:token" element={<VerifyAccount />} />
         <Route path="/password-recovery" element={<PasswordRecovery />} />
       </Routes>
     </BrowserRouter>
