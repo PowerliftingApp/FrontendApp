@@ -19,8 +19,8 @@ import { Link, useNavigate } from "react-router";
 import { useState } from "react";
 import { LoginFormSchema } from "../schemas/LoginForm.schema";
 import { Label } from "@/components/ui/label";
-import { toast } from "sonner";
 import axios from "axios";
+import { toast } from "sonner";
 
 export function LoginForm() {
   const form = useForm<z.infer<typeof LoginFormSchema>>({
@@ -35,21 +35,31 @@ export function LoginForm() {
   const [isLoading, setIsLoading] = useState(false);
 
   async function onSubmit(data: z.infer<typeof LoginFormSchema>) {
+    setIsLoading(true);
     try {
-      setIsLoading(true);
       const response = await axios.post(
-        `${import.meta.env.VITE_API_URL}auth/login`,
+        import.meta.env.VITE_API_URL + "auth/login",
         data
       );
+
+      if (response.status === 401) {
+        toast("Por favor, activa tu cuenta antes de iniciar sesión", {
+          description: "Revisa tu correo para activar tu cuenta",
+        });
+      }
+
       if (response.status === 201) {
-        toast.success("Inicio de sesión exitoso");
+        sessionStorage.setItem("token", response.data.access_token);
+        sessionStorage.setItem("user", JSON.stringify(response.data.user));
         navigate("/dashboard");
       }
     } catch (error: any) {
-      console.log(error);
-      toast.error("Ha ocurrido un error al iniciar sesión", {
-        description: error.response.data.message,
+      console.error(error);
+      toast.error("Ocurrió un error al iniciar sesión", {
+        description: error.response?.data.message,
       });
+    } finally {
+      setIsLoading(false);
     }
   }
 

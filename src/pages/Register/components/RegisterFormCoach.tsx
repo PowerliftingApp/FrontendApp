@@ -50,6 +50,9 @@ export function RegisterFormCoach() {
       );
 
       if (response.status === 201) {
+        toast.success(
+          "Usuario registrado correctamente. Por favor, revisa tu correo para activar la cuenta."
+        );
         setIsRegistered(true);
       }
     } catch (error: any) {
