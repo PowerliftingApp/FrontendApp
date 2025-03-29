@@ -3,7 +3,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-
+import { toast } from "sonner";
 import { LoadingButton } from "@/components/ui/button";
 import {
   Form,
@@ -14,10 +14,9 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { useNavigate } from "react-router";
-
 import { useState } from "react";
 import { PasswordRecoverySchema } from "../schemas/PasswordRecovery.schema";
+import axios from "axios";
 
 export function PasswordRecoveryForm() {
   const form = useForm<z.infer<typeof PasswordRecoverySchema>>({
@@ -27,11 +26,31 @@ export function PasswordRecoveryForm() {
     },
   });
 
-  const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
 
   async function onSubmit(data: z.infer<typeof PasswordRecoverySchema>) {
-    console.log(data);
+    try {
+      setIsLoading(true);
+      const response = await axios.post(
+        import.meta.env.VITE_API_URL + "users/recover-password",
+        data
+      );
+      if (response.status === 201) {
+        toast.success(
+          "Se ha enviado un correo con las instrucciones para recuperar tu contraseña"
+        );
+        form.reset();
+      }
+      if (response.status === 404) {
+        toast.error("No se encontró un usuario con ese correo electrónico");
+      }
+    } catch (error: any) {
+      toast.error("Ha ocurrido un error al procesar tu solicitud", {
+        description: error.response.data.message,
+      });
+    } finally {
+      setIsLoading(false);
+    }
   }
 
   return (

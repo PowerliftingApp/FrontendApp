@@ -19,6 +19,8 @@ import { Link, useNavigate } from "react-router";
 import { useState } from "react";
 import { LoginFormSchema } from "../schemas/LoginForm.schema";
 import { Label } from "@/components/ui/label";
+import { toast } from "sonner";
+import axios from "axios";
 
 export function LoginForm() {
   const form = useForm<z.infer<typeof LoginFormSchema>>({
@@ -33,8 +35,22 @@ export function LoginForm() {
   const [isLoading, setIsLoading] = useState(false);
 
   async function onSubmit(data: z.infer<typeof LoginFormSchema>) {
-    console.log(data);
-    navigate("/dashboard");
+    try {
+      setIsLoading(true);
+      const response = await axios.post(
+        `${import.meta.env.VITE_API_URL}auth/login`,
+        data
+      );
+      if (response.status === 201) {
+        toast.success("Inicio de sesión exitoso");
+        navigate("/dashboard");
+      }
+    } catch (error: any) {
+      console.log(error);
+      toast.error("Ha ocurrido un error al iniciar sesión", {
+        description: error.response.data.message,
+      });
+    }
   }
 
   return (

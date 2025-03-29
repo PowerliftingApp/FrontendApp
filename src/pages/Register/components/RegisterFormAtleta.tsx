@@ -35,8 +35,8 @@ export function RegisterFormAtleta() {
 
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
+  const [isRegistered, setIsRegistered] = useState(false);
 
-  // Extraer la logica de esta funcion a un hook o servicio separado
   async function onSubmit(data: z.infer<typeof RegisterFormAtletaSchema>) {
     setIsLoading(true);
 
@@ -52,10 +52,7 @@ export function RegisterFormAtleta() {
       );
 
       if (response.status === 201) {
-        toast.success(
-          "Usuario registrado correctamente. Por favor, revisa tu correo para activar la cuenta."
-        );
-        // navigate("/login");
+        setIsRegistered(true);
       }
     } catch (error: any) {
       console.error(error);
@@ -65,6 +62,21 @@ export function RegisterFormAtleta() {
     }
 
     setIsLoading(false);
+  }
+
+  if (isRegistered) {
+    return (
+      <div className="text-center space-y-4">
+        <h2 className="text-2xl font-semibold">¡Registro exitoso!</h2>
+        <div className="space-y-2">
+          <p>Hemos enviado un correo de verificación a tu dirección de email.</p>
+          <p>Por favor, revisa tu bandeja de entrada y sigue el enlace para activar tu cuenta.</p>
+        </div>
+        <p className="text-sm text-muted-foreground">
+          Si no encuentras el correo, revisa tu carpeta de spam.
+        </p>
+      </div>
+    );
   }
 
   return (
