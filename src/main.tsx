@@ -10,25 +10,30 @@ import { Toaster } from "./components/ui/sonner.tsx";
 import VerifyAccount from "./pages/VerifyAccount/VerifyAccount.tsx";
 import ResetPassword from "./pages/ResetPassword/ResetPassword.tsx";
 import Dashboard from "./pages/Dashboard/Dashboard.tsx";
+import TrainingPlans from "./pages/TrainingPlans/TrainingPlans.tsx";
+import Athletes from "./pages/TrainingPlans copy/Athletes.tsx";
+import Home from "./pages/Home/Home.tsx";
 
 createRoot(document.getElementById("root")!).render(
-  <StrictMode>
-    <BrowserRouter>
-      <Toaster
-        toastOptions={{
-          classNames: {
-            description: "description",
-          },
-        }}
-      />
-      <Routes>
-        <Route path="/" element={<Login />} />
-        <Route path="/register" element={<Register />} />
-        <Route path="/activate-account/:token" element={<VerifyAccount />} />
-        <Route path="/password-recovery" element={<PasswordRecovery />} />
-        <Route path="/reset-password" element={<ResetPassword />} />
-        <Route path="/dashboard" element={<Dashboard />} />
-      </Routes>
-    </BrowserRouter>
-  </StrictMode>
+  <BrowserRouter>
+    <Toaster
+      toastOptions={{
+        classNames: {
+          description: "description",
+        },
+      }}
+    />
+    <Routes>
+      <Route path="/" element={<Login />} />
+      <Route path="/register" element={<Register />} />
+      <Route path="/activate-account/:token" element={<VerifyAccount />} />
+      <Route path="/password-recovery" element={<PasswordRecovery />} />
+      <Route path="/reset-password" element={<ResetPassword />} />
+      <Route path="/" element={<Dashboard />}>
+        <Route path="/dashboard" element={<Home />} />
+        <Route path="/dashboard/athletes" element={<Athletes />} />
+        <Route path="/dashboard/training-plans" element={<TrainingPlans />} />
+      </Route>
+    </Routes>
+  </BrowserRouter>
 );
