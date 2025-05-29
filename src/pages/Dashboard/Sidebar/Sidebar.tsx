@@ -20,6 +20,7 @@ import {
 import {
   BicepsFlexed,
   ChevronUp,
+  File,
   Home,
   SquareChartGantt,
   User2,
@@ -49,6 +50,11 @@ const itemsCoach = [
     title: "Atletas",
     url: "/dashboard/athletes",
     icon: Users,
+  },
+  {
+    title: "Plantillas",
+    url: "/dashboard/templates",
+    icon: File,
   },
 ];
 

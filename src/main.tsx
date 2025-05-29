@@ -1,4 +1,3 @@
-import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import "./index.css";
 import { BrowserRouter, Route, Routes } from "react-router";
@@ -13,6 +12,9 @@ import Dashboard from "./pages/Dashboard/Dashboard.tsx";
 import TrainingPlans from "./pages/TrainingPlans/TrainingPlans.tsx";
 import Athletes from "./pages/TrainingPlans copy/Athletes.tsx";
 import Home from "./pages/Home/Home.tsx";
+import Templates from "./pages/Templates/Templates.tsx";
+import TrainingPlansDetail from "./pages/TrainingPlansDetail/TrainingPlansDetail.tsx";
+import CreateTrainingPlan from "./pages/CreateTrainingPlan/CreateTrainingPlan.tsx";
 
 createRoot(document.getElementById("root")!).render(
   <BrowserRouter>
@@ -33,6 +35,15 @@ createRoot(document.getElementById("root")!).render(
         <Route path="/dashboard" element={<Home />} />
         <Route path="/dashboard/athletes" element={<Athletes />} />
         <Route path="/dashboard/training-plans" element={<TrainingPlans />} />
+        <Route path="/dashboard/templates" element={<Templates />} />
+        <Route
+          path="/dashboard/training-plans/detail"
+          element={<TrainingPlansDetail />}
+        />
+        <Route
+          path="/dashboard/training-plans/create"
+          element={<CreateTrainingPlan />}
+        />
       </Route>
     </Routes>
   </BrowserRouter>

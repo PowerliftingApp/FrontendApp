@@ -1,26 +1,12 @@
-import { Calendar, dateFnsLocalizer } from "react-big-calendar";
-import "react-big-calendar/lib/css/react-big-calendar.css";
-import { format, parse, startOfWeek, getDay } from "date-fns";
-import { es as esES } from "date-fns/locale";
-import axiosInstance from "@/lib/axiosInstance";
+import FullCalendar from "@fullcalendar/react";
+import dayGridPlugin from "@fullcalendar/daygrid";
+import interactionPlugin from "@fullcalendar/interaction";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { useState, useEffect } from "react";
-import {
-  Session,
-  TrainingPlan,
-} from "../TrainingPlans/TrainingPlansTable/columns";
-
-const locales = {
-  es: esES,
-};
-
-const localizer = dateFnsLocalizer({
-  format,
-  parse,
-  startOfWeek: () => startOfWeek(new Date(), { weekStartsOn: 1 }),
-  getDay,
-  locales,
-});
+import { TrainingPlan } from "../TrainingPlans/TrainingPlansTable/columns";
+import axiosInstance from "@/lib/axiosInstance";
+import { format } from "date-fns";
+import { useNavigate } from "react-router";
 
 export async function fetchPlans() {
   const user = JSON.parse(sessionStorage.getItem("user") || "{}");
@@ -43,67 +29,78 @@ export async function fetchPlans() {
 
 export default function MyCalendar() {
   const [events, setEvents] = useState<any[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const navigate = useNavigate();
+
+  const handleEventClick = (eventInfo: any) => {
+    if (eventInfo.event.extendedProps.athleteId) {
+      navigate(`/dashboard/training-plans?athleteId=${eventInfo.event.extendedProps.athleteId}`);
+    }
+  };
+
+  function renderEventContent(eventInfo: any) {
+    return (
+      <div 
+        style={{ padding: '6px 8px', borderRadius: 6, fontSize: 13, cursor: 'pointer' }}
+        onClick={() => handleEventClick(eventInfo)}
+      >
+        <b>{eventInfo.event.title}</b>
+      </div>
+    );
+  }
 
   useEffect(() => {
     const loadPlans = async () => {
-      try {
-        setIsLoading(true);
-        const plansData: TrainingPlan[] = await fetchPlans();
+      const plansData = await fetchPlans();
+      if (!plansData) return;
 
-        if (!plansData) return;
+      // Eventos de fondo (planes)
+      const planEvents = plansData.map((plan: TrainingPlan) => ({
+        title:  `${plan.athleteId.fullName}: ${plan.name.toUpperCase()}`,
+        start: format(new Date(plan.startDate), "yyyy-MM-dd"),
+        end: format(new Date(plan.endDate), "yyyy-MM-dd"),
+        color: "#5B4FFF",
+        athleteId: plan.athleteId._id
+      }));
 
-        const allEvents = plansData.flatMap((plan) =>
-          plan.sessions.map((session: Session) => ({
-            title:
-              `${plan.athleteId.fullName} - ${plan.name}: ` +
-              session.exercises
-                .map((e) => `${e.name} ${e.sets}×${e.reps}`)
-                .join(", "),
-            start: new Date(session.date),
-            end: new Date(session.date),
-            allDay: true,
-            resource: { ...session, planName: plan.name },
-          }))
-        );
+      // Eventos normales (sesiones)
+      const sessionEvents = plansData.flatMap((plan: TrainingPlan) =>
+        plan.sessions.map((session) => ({
+          title:
+            `${plan.athleteId.fullName}: ${session.sessionName} - ` +
+            session.exercises
+              .map((e) => `${e.name} ${e.sets}×${e.reps}`)
+              .join(", "),
+          start: session.date,
+          end: session.date,
+          color: "#333369",
+          textColor: "#fff",
+        }))
+      );
 
-        setEvents(allEvents);
-      } catch (error) {
-        console.error("Error al cargar los planes:", error);
-        toast.error("Error al cargar los planes de entrenamiento");
-      } finally {
-        setIsLoading(false);
-      }
+      setEvents([...planEvents, ...sessionEvents]);
     };
 
     loadPlans();
   }, []);
 
   return (
-    <div className="flex flex-col gap-y-3 mt-16">
+    <div className="mt-16">
       <h1 className="text-2xl font-bold mb-6">Entrenamientos</h1>
-      {isLoading ? (
-        <div className="flex justify-center items-center h-64">
-          <p>Cargando planes de entrenamiento...</p>
-        </div>
-      ) : (
-        <Calendar
-          localizer={localizer}
-          events={events}
-          startAccessor="start"
-          endAccessor="end"
-          style={{ height: 600 }}
-          views={["month"]}
-          messages={{
-            month: "Mes",
-            week: "Semana",
-            day: "Día",
-            today: "Hoy",
-            previous: "Anterior",
-            next: "Siguiente",
-          }}
-        />
-      )}
+      <FullCalendar
+        plugins={[dayGridPlugin, interactionPlugin]}
+        initialView="dayGridMonth"
+        locale="es"
+        events={events}
+        height={800}
+        eventDisplay="block"
+        dayMaxEventRows={3}
+        headerToolbar={{
+          left: "prev,next today",
+          center: "title",
+          right: "dayGridMonth",
+        }}
+        eventContent={renderEventContent}
+      />
     </div>
   );
 }

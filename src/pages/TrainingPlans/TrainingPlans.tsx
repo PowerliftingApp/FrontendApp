@@ -1,65 +1,22 @@
 import { useEffect, useState } from "react";
 import { TrainingPlansTable } from "./TrainingPlansTable/TrainingPlansTable";
-import { columns } from "./TrainingPlansTable/columns";
+import { createColumns } from "./TrainingPlansTable/columns";
 import { TrainingPlan } from "./TrainingPlansTable/columns";
 import axiosInstance from "@/lib/axiosInstance";
 import { toast } from "sonner";
+import { useSearchParams } from 'react-router';
 
-const mockData: TrainingPlan[] = [
-  {
-    athleteId: {
-      _id: "681fd4c52c8548045b13b43a",
-      fullName: "José López",
-      email: "fercitox@gmail.com",
-    },
-    coachId: "COACH-1GMTFP",
-    name: "Plan de Fuerza - Mes 1",
-    startDate: new Date("2024-03-20"),
-    endDate: new Date("2024-04-20"),
-    sessions: [
-      {
-        sessionName: "Entrenamiento de Fuerza - Día 1",
-        date: "2024-03-20",
-        exercises: [
-          {
-            name: "Sentadilla",
-            sets: 5,
-            reps: 5,
-            rpe: 8,
-            rir: 2,
-            rm: 85,
-            notes: "Enfocarse en la técnica",
-            performedSets: [
-              {
-                setNumber: 1,
-                repsPerformed: 5,
-                loadUsed: 100,
-                measureAchieved: 100,
-              },
-              {
-                setNumber: 2,
-                repsPerformed: 5,
-                loadUsed: 105,
-                measureAchieved: 105,
-              },
-            ],
-          },
-        ],
-      },
-    ],
-  },
-];
-
-export async function fetchPlans() {
+async function fetchPlans(athleteId?: string) {
   const user = JSON.parse(sessionStorage.getItem("user") || "{}");
-
   if (!user.coachId || user.role !== "coach") {
     throw new Error("Usuario no autorizado");
   }
   try {
-    const response = await axiosInstance.get(
-      `/training-plans/?coachId=${user.coachId}`
-    );
+    let url = `/training-plans/?coachId=${user.coachId}`;
+    if (athleteId) {
+      url += `&athleteId=${athleteId}`;
+    }
+    const response = await axiosInstance.get(url);
     return response.data;
   } catch (error: any) {
     toast.error("Error al obtener planes", {
@@ -71,23 +28,31 @@ export async function fetchPlans() {
 export default function TrainingPlans() {
   const [data, setData] = useState<TrainingPlan[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [searchParams] = useSearchParams();
+  const athleteId = searchParams.get('athleteId') || undefined;
+
+  const loadPlans = async () => {
+    try {
+      setIsLoading(true);
+      const plansData = await fetchPlans(athleteId);
+      setData(plansData || []);
+    } catch (error) {
+      console.error('Error al cargar los planes:', error);
+      toast.error('Error al cargar los planes de entrenamiento');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const loadPlans = async () => {
-      try {
-        setIsLoading(true);
-        const plansData = await fetchPlans();
-        setData(plansData || []);
-      } catch (error) {
-        console.error('Error al cargar los planes:', error);
-        toast.error('Error al cargar los planes de entrenamiento');
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
     loadPlans();
-  }, []);
+  }, [athleteId]);
+
+  const handlePlanDeleted = () => {
+    loadPlans();
+  };
+
+  const columns = createColumns(handlePlanDeleted);
 
   return (
     <div className="container mx-auto py-10">
@@ -97,7 +62,10 @@ export default function TrainingPlans() {
           <p>Cargando planes de entrenamiento...</p>
         </div>
       ) : (
-        <TrainingPlansTable columns={columns} data={data} />
+        <TrainingPlansTable 
+          columns={columns} 
+          data={data} 
+        />
       )}
     </div>
   );
