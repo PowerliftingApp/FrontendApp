@@ -10,11 +10,13 @@ import VerifyAccount from "./pages/VerifyAccount/VerifyAccount.tsx";
 import ResetPassword from "./pages/ResetPassword/ResetPassword.tsx";
 import Dashboard from "./pages/Dashboard/Dashboard.tsx";
 import TrainingPlans from "./pages/TrainingPlans/TrainingPlans.tsx";
-import Athletes from "./pages/TrainingPlans copy/Athletes.tsx";
+import Athletes from "./pages/Athletes/Athletes.tsx";
 import Home from "./pages/Home/Home.tsx";
 import Templates from "./pages/Templates/Templates.tsx";
 import TrainingPlansDetail from "./pages/TrainingPlansDetail/TrainingPlansDetail.tsx";
 import CreateTrainingPlan from "./pages/CreateTrainingPlan/CreateTrainingPlan.tsx";
+import EditTrainingPlan from "./pages/EditTrainingPlan/EditTrainingPlan.tsx";
+import Settings from "./pages/Settings/Settings.tsx";
 
 createRoot(document.getElementById("root")!).render(
   <BrowserRouter>
@@ -33,6 +35,7 @@ createRoot(document.getElementById("root")!).render(
       <Route path="/reset-password" element={<ResetPassword />} />
       <Route path="/" element={<Dashboard />}>
         <Route path="/dashboard" element={<Home />} />
+        <Route path="/dashboard/settings" element={<Settings />} />
         <Route path="/dashboard/athletes" element={<Athletes />} />
         <Route path="/dashboard/training-plans" element={<TrainingPlans />} />
         <Route path="/dashboard/templates" element={<Templates />} />
@@ -43,6 +46,10 @@ createRoot(document.getElementById("root")!).render(
         <Route
           path="/dashboard/training-plans/create"
           element={<CreateTrainingPlan />}
+        />
+        <Route
+          path="/dashboard/training-plans/edit"
+          element={<EditTrainingPlan />}
         />
       </Route>
     </Routes>

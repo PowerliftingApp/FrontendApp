@@ -6,8 +6,10 @@ import { Pencil, Eye } from "lucide-react";
 import { ArrowUpDown } from "lucide-react";
 import { Link } from "react-router";
 import DeleteTrainingPlanModal from "../components/DeleteTrainingPlanModal/DeleteTrainingPlanModal";
+import ConvertToTemplateModal from "../components/ConvertToTemplateModal/ConvertToTemplateModal";
 
 export interface PerformedSet {
+  setId?: string;
   setNumber: number;
   repsPerformed: number | null;
   loadUsed: number | null;
@@ -15,6 +17,7 @@ export interface PerformedSet {
 }
 
 export interface Exercise {
+  exerciseId?: string;
   name: string;
   sets: number;
   reps: number;
@@ -22,10 +25,12 @@ export interface Exercise {
   rir: number | null;
   rm: number | null;
   notes: string | null;
+  weight?: number | null;
   performedSets: PerformedSet[];
 }
 
 export interface Session {
+  sessionId?: string;
   sessionName: string;
   date: string;
   exercises: Exercise[];
@@ -43,6 +48,8 @@ export interface TrainingPlan {
   startDate: Date;
   endDate: Date;
   sessions: Session[];
+  isTemplate?: boolean;
+  templateId?: string;
   createdAt?: Date;
   updatedAt?: Date;
 }
@@ -103,19 +110,28 @@ export const createColumns = (onPlanDeleted?: () => void): ColumnDef<TrainingPla
   {
     id: "actions",
     cell: ({ row }) => {
+      const plan = row.original;
       return (
         <div className="flex gap-2 justify-end">
-          <Button variant="default" size="icon" asChild>
+          <ConvertToTemplateModal 
+            planId={plan._id}
+            planName={plan.name}
+            isTemplate={plan.isTemplate || false}
+            onConversion={onPlanDeleted}
+          />
+          <Button variant="outline" size="icon" asChild>
             <Link
-              to={`/dashboard/training-plans/detail?id=${row.original._id}`}
+              to={`/dashboard/training-plans/detail?id=${plan._id}`}
             >
               <Eye className="h-4 w-4" />
             </Link>
           </Button>
-          <Button variant="default" size="icon">
-            <Pencil className="h-4 w-4" />
+          <Button variant="outline" size="icon" asChild>
+            <Link to={`/dashboard/training-plans/edit?id=${plan._id}`}>
+              <Pencil className="h-4 w-4" />
+            </Link>
           </Button>
-          <DeleteTrainingPlanModal id={row.original._id} onDelete={onPlanDeleted} />
+          <DeleteTrainingPlanModal id={plan._id} onDelete={onPlanDeleted} />
         </div>
       );
     },

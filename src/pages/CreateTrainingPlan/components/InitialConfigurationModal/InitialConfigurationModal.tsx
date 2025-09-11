@@ -26,8 +26,11 @@ interface Athlete {
 }
 
 interface Template {
-  id: string;
+  _id: string;
   name: string;
+  description: string;
+  type: string;
+  sessions: any[];
 }
 
 interface InitialConfigurationModalProps {
@@ -35,7 +38,7 @@ interface InitialConfigurationModalProps {
   onClose: () => void;
   onContinue: (
     selectedAthleteId: string,
-    selectedTemplateId: string | null
+    selectedTemplate: Template | null
   ) => void;
 }
 
@@ -45,50 +48,69 @@ export default function InitialConfigurationModal({
   onContinue,
 }: InitialConfigurationModalProps) {
   const [athletes, setAthletes] = useState<Athlete[]>([]);
+  const [templates, setTemplates] = useState<Template[]>([]);
   const [selectedAthleteId, setSelectedAthleteId] = useState<string>("");
   const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(
     null
   );
-
-  // Mock templates
-  const templates: Template[] = [
-    { id: "1", name: "Plan de Fuerza Básico" },
-    { id: "2", name: "Plan de Hipertrofia" },
-    { id: "3", name: "Plan de Resistencia" },
-  ];
+  const [isLoadingTemplates, setIsLoadingTemplates] = useState(false);
 
   useEffect(() => {
-    const fetchAthletes = async () => {
+    const fetchData = async () => {
       try {
-        const coachId = JSON.parse(
-          sessionStorage.getItem("user") || "{}"
-        ).coachId;
+        const user = JSON.parse(sessionStorage.getItem("user") || "{}");
+        const coachId = user.coachId;
+        
         if (!coachId) {
           throw new Error("Coach ID not found");
         }
 
-        const response = await axiosInstance.get("/users/athletes/" + coachId);
-        const data = await response.data;
-        setAthletes(data);
+        // Fetch athletes
+        const athletesResponse = await axiosInstance.get("/users/athletes/" + coachId);
+        setAthletes(athletesResponse.data);
+
+        // Fetch templates
+        setIsLoadingTemplates(true);
+        const templatesResponse = await axiosInstance.get("/templates");
+        
+        // Filtrar plantillas disponibles para el coach (predefinidas + propias)
+        const availableTemplates = templatesResponse.data.filter((template: Template) => 
+          template.type === 'predefined' || template.type === 'user_created'
+        );
+        
+        setTemplates(availableTemplates);
       } catch (error) {
-        console.error("Error fetching athletes:", error);
+        console.error("Error fetching data:", error);
+      } finally {
+        setIsLoadingTemplates(false);
       }
     };
 
     if (isOpen) {
-      fetchAthletes();
+      fetchData();
     }
   }, [isOpen]);
 
-  const handleContinue = () => {
+  const handleContinue = async () => {
     if (selectedAthleteId) {
-      onContinue(selectedAthleteId, selectedTemplateId);
+      let selectedTemplate: Template | null = null;
+      
+      if (selectedTemplateId && selectedTemplateId !== 'ninguna' && selectedTemplateId !== 'loading') {
+        try {
+          const templateResponse = await axiosInstance.get(`/templates/${selectedTemplateId}`);
+          selectedTemplate = templateResponse.data;
+        } catch (error) {
+          console.error("Error fetching template details:", error);
+        }
+      }
+      
+      onContinue(selectedAthleteId, selectedTemplate);
     }
   };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-2xl">
         <DialogHeader>
           <DialogTitle>Configuración Inicial del Plan</DialogTitle>
         </DialogHeader>
@@ -103,14 +125,28 @@ export default function InitialConfigurationModal({
                 <SelectValue placeholder="Selecciona una plantilla" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="ninguna">Sin plantilla</SelectItem>
-                {templates.map((template) => (
-                  <SelectItem key={template.id} value={template.id}>
-                    {template.name}
-                  </SelectItem>
-                ))}
+                <SelectItem value="ninguna">
+                  Crear desde cero
+                </SelectItem>
+                {isLoadingTemplates ? (
+                  <SelectItem value="loading" disabled>Cargando plantillas...</SelectItem>
+                ) : (
+                  templates.map((template) => (
+                    <SelectItem key={template._id} value={template._id}>
+                      {template.name}
+                    </SelectItem>
+                  ))
+                )}
               </SelectContent>
             </Select>
+            
+            {selectedTemplateId && selectedTemplateId !== 'ninguna' && selectedTemplateId !== 'loading' && (
+              <div className="p-3 bg-blue-50 border border-blue-200 rounded-md">
+                <p className="text-sm text-blue-800">
+                  💡 Se precargará la estructura de la plantilla. Podrás modificar todos los datos antes de guardar.
+                </p>
+              </div>
+            )}
           </div>
           <div className="grid gap-2">
             <Label htmlFor="athlete">Atleta</Label>

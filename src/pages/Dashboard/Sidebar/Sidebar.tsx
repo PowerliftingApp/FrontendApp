@@ -25,6 +25,7 @@ import {
   SquareChartGantt,
   User2,
   Users,
+  Settings as SettingsIcon,
 } from "lucide-react";
 import { Link, useNavigate } from "react-router";
 import { Button } from "@/components/ui/button";
@@ -35,11 +36,6 @@ const itemsCoach = [
     title: "Inicio",
     url: "/dashboard",
     icon: Home,
-  },
-  {
-    title: "Entrenamientos",
-    url: "/dashboard/plans",
-    icon: BicepsFlexed,
   },
   {
     title: "Planes de entrenamiento",
@@ -55,6 +51,11 @@ const itemsCoach = [
     title: "Plantillas",
     url: "/dashboard/templates",
     icon: File,
+  },
+  {
+    title: "Configuración",
+    url: "/dashboard/settings",
+    icon: SettingsIcon,
   },
 ];
 
@@ -73,6 +74,11 @@ const itemsAthlete = [
     title: "Mi Coach",
     url: "/dashboard/athletes",
     icon: Users,
+  },
+  {
+    title: "Configuración",
+    url: "/dashboard/settings",
+    icon: SettingsIcon,
   },
 ];
 

@@ -1,12 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router';
+import { useNavigate, useSearchParams } from 'react-router';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { DatePicker } from "@/components/ui/date-picker";
 import { Plus, Trash2 } from "lucide-react";
-import InitialConfigurationModal from './components/InitialConfigurationModal/InitialConfigurationModal';
 import { Exercise, Session } from '../TrainingPlans/TrainingPlansTable/columns';
 import axiosInstance from "@/lib/axiosInstance";
 import { toast } from "sonner";
@@ -21,9 +20,11 @@ interface TrainingPlanForm {
   sessions: Session[];
 }
 
-export default function CreateTrainingPlan() {
+export default function EditTrainingPlan() {
   const navigate = useNavigate();
-  const [showModal, setShowModal] = useState(true);
+  const [searchParams] = useSearchParams();
+  const planId = searchParams.get('id');
+  const [loading, setLoading] = useState(true);
   const [plan, setPlan] = useState<TrainingPlanForm>({
     athleteId: "",
     coachId: "",
@@ -33,37 +34,62 @@ export default function CreateTrainingPlan() {
     sessions: []
   });
 
-  // Cargar el coachId del usuario autenticado al montar el componente
+  // Cargar datos del plan existente
   useEffect(() => {
-    const userStr = sessionStorage.getItem("user");
-    if (!userStr) {
-      toast.error("No se encontró información del usuario");
-      navigate("/");
-      return;
-    }
+    const fetchPlan = async () => {
+      if (!planId) {
+        toast.error("ID del plan no proporcionado");
+        navigate('/dashboard/training-plans');
+        return;
+      }
 
-    const user = JSON.parse(userStr);
-    
-    // Verificar que el usuario sea un coach
-    if (user.role !== "coach") {
-      toast.error("Solo los entrenadores pueden crear planes de entrenamiento");
-      navigate("/dashboard");
-      return;
-    }
+      try {
+        const userStr = sessionStorage.getItem("user");
+        if (!userStr) {
+          toast.error("No se encontró información del usuario");
+          navigate("/");
+          return;
+        }
 
-    // Verificar que tenga coachId
-    if (!user.coachId) {
-      toast.error("No se encontró el ID del entrenador");
-      navigate("/dashboard");
-      return;
-    }
+        const user = JSON.parse(userStr);
+        
+        // Verificar que el usuario sea un coach
+        if (user.role !== "coach") {
+          toast.error("Solo los entrenadores pueden editar planes de entrenamiento");
+          navigate("/dashboard");
+          return;
+        }
 
-    // Cargar el coachId en el formulario
-    setPlan(prev => ({
-      ...prev,
-      coachId: user.coachId
-    }));
-  }, [navigate]);
+        // Verificar que tenga coachId
+        if (!user.coachId) {
+          toast.error("No se encontró el ID del entrenador");
+          navigate("/dashboard");
+          return;
+        }
+
+        const response = await axiosInstance.get(`/training-plans/${planId}`);
+        const existingPlan = response.data;
+
+        // Transformar los datos para el formulario
+        setPlan({
+          athleteId: existingPlan.athleteId._id || existingPlan.athleteId,
+          coachId: user.coachId,
+          name: existingPlan.name,
+          startDate: existingPlan.startDate ? parseISO(existingPlan.startDate) : undefined,
+          endDate: existingPlan.endDate ? parseISO(existingPlan.endDate) : undefined,
+          sessions: existingPlan.sessions || []
+        });
+
+        setLoading(false);
+      } catch (error: any) {
+        console.error('Error fetching plan:', error);
+        toast.error("Error al cargar el plan de entrenamiento");
+        navigate('/dashboard/training-plans');
+      }
+    };
+
+    fetchPlan();
+  }, [planId, navigate]);
 
   // Validaciones de fechas
   const validateDates = () => {
@@ -95,45 +121,6 @@ export default function CreateTrainingPlan() {
   const isSessionDateDisabled = (date: Date) => {
     if (!plan.startDate || !plan.endDate) return false;
     return isBefore(date, plan.startDate) || isAfter(date, plan.endDate);
-  };
-
-  const handleModalContinue = async (athleteId: string, template: any | null) => {
-    if (template) {
-      // Incrementar contador de uso de la plantilla
-      try {
-        await axiosInstance.patch(`/templates/${template._id}/increment-usage`);
-      } catch (error) {
-        console.error("Error incrementing template usage:", error);
-      }
-
-      // Precargar datos desde la plantilla
-      setPlan(prev => ({
-        ...prev,
-        athleteId,
-        name: `${template.name} - ${new Date().toLocaleDateString()}`,
-        sessions: template.sessions.map((session: any) => ({
-          ...session,
-          exercises: session.exercises.map((exercise: any) => ({
-            ...exercise,
-            performedSets: exercise.performedSets.map((set: any) => ({
-              ...set,
-              repsPerformed: null,
-              loadUsed: null,
-              measureAchieved: null,
-              notes: ""
-            }))
-          }))
-        }))
-      }));
-      toast.success(`Plantilla "${template.name}" cargada exitosamente`);
-    } else {
-      // Crear desde cero
-      setPlan(prev => ({
-        ...prev,
-        athleteId
-      }));
-    }
-    setShowModal(false);
   };
 
   const addSession = () => {
@@ -250,26 +237,42 @@ export default function CreateTrainingPlan() {
     };
 
     try {
-      const response = await axiosInstance.post('/training-plans', planData, {
+      const response = await axiosInstance.patch(`/training-plans/${planId}`, planData, {
         headers: {
           Authorization: `Bearer ${sessionStorage.getItem("token")}`,
         },
       });
 
-      if (response.status === 201 || response.status === 200) {
-        toast.success("Plan de entrenamiento creado correctamente");
+      if (response.status === 200) {
+        toast.success("Plan de entrenamiento actualizado correctamente");
         navigate('/dashboard/training-plans');
       }
     } catch (error: any) {
-      console.error('Error creating training plan:', error);
-      toast.error("Error al crear el plan de entrenamiento", {
+      console.error('Error updating training plan:', error);
+      toast.error("Error al actualizar el plan de entrenamiento", {
         description: error.response?.data?.message || "Intenta nuevamente más tarde",
       });
     }
   };
 
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-2"></div>
+          <p className="text-muted-foreground">Cargando plan de entrenamiento...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="container mx-auto py-6">
+      <div className="mb-6">
+        <h1 className="text-3xl font-bold">Editar Plan de Entrenamiento</h1>
+        <p className="text-muted-foreground">Modifica los detalles del plan existente</p>
+      </div>
+
       <form onSubmit={handleSubmit} className="space-y-6">
         <div className="grid gap-4">
           <div className="grid gap-2">
@@ -469,16 +472,10 @@ export default function CreateTrainingPlan() {
             Cancelar
           </Button>
           <Button type="submit">
-            Crear Plan
+            Actualizar Plan
           </Button>
         </div>
       </form>
-
-      <InitialConfigurationModal
-        isOpen={showModal}
-        onClose={() => navigate('/dashboard/training-plans')}
-        onContinue={handleModalContinue}
-      />
     </div>
   );
 }
