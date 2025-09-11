@@ -77,15 +77,17 @@ export default function CreateTrainingPlan() {
       return false;
     }
 
-    // Validar fechas de sesiones
+    // Validar fechas de sesiones (obligatorias y dentro del rango)
     for (let i = 0; i < plan.sessions.length; i++) {
       const session = plan.sessions[i];
-      if (session.date) {
-        const sessionDate = parseISO(session.date);
-        if (isBefore(sessionDate, plan.startDate) || isAfter(sessionDate, plan.endDate)) {
-          toast.error(`La fecha de la sesión "${session.sessionName || `Sesión ${i + 1}`}" debe estar entre las fechas del plan`);
-          return false;
-        }
+      if (!session.date) {
+        toast.error(`La sesión "${session.sessionName || `Sesión ${i + 1}`}" debe tener una fecha`);
+        return false;
+      }
+      const sessionDate = parseISO(session.date);
+      if (isBefore(sessionDate, plan.startDate) || isAfter(sessionDate, plan.endDate)) {
+        toast.error(`La fecha de la sesión "${session.sessionName || `Sesión ${i + 1}`}" debe estar entre las fechas del plan`);
+        return false;
       }
     }
 
@@ -106,13 +108,14 @@ export default function CreateTrainingPlan() {
         console.error("Error incrementing template usage:", error);
       }
 
-      // Precargar datos desde la plantilla
+      // Precargar datos desde la plantilla (forzamos fecha vacía para que el usuario seleccione una válida)
       setPlan(prev => ({
         ...prev,
         athleteId,
         name: `${template.name} - ${new Date().toLocaleDateString()}`,
         sessions: template.sessions.map((session: any) => ({
           ...session,
+          date: '',
           exercises: session.exercises.map((exercise: any) => ({
             ...exercise,
             performedSets: exercise.performedSets.map((set: any) => ({
@@ -126,6 +129,7 @@ export default function CreateTrainingPlan() {
         }))
       }));
       toast.success(`Plantilla "${template.name}" cargada exitosamente`);
+      toast.message('Selecciona una fecha para cada sesión', { description: 'Las sesiones importadas requieren fecha dentro del rango del plan.' });
     } else {
       // Crear desde cero
       setPlan(prev => ({

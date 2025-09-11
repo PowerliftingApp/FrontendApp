@@ -74,8 +74,15 @@ export default function MyCalendar() {
   const [sheetData, setSheetData] = useState<SheetData | null>(null);
   const navigate = useNavigate();
 
-  const formatDate = (dateString: string | Date) => {
-    const date = new Date(dateString);
+  const parseDate = (value: any): Date | null => {
+    if (!value) return null;
+    const d = value instanceof Date ? value : new Date(value);
+    return isNaN(d.getTime()) ? null : d;
+  };
+
+  const formatDate = (dateInput: string | Date) => {
+    const date = parseDate(dateInput);
+    if (!date) return 'Fecha inválida';
     return format(date, "dd 'de' MMMM 'de' yyyy", { locale: es });
   };
 
@@ -121,23 +128,26 @@ export default function MyCalendar() {
           : 'Mi plan';
 
       // Eventos de fondo (planes)
-      const planEvents = plansData.map((plan: TrainingPlan) => ({
+      const planEvents = plansData.map((plan: TrainingPlan) => {
+        const start = parseDate(plan.startDate) || new Date();
+        const end = parseDate(plan.endDate) || start;
+        return ({
         title: `${getAthleteName(plan)}: ${plan.name.toUpperCase()}`,
-        start: format(new Date(plan.startDate), "yyyy-MM-dd"),
-        end: format(new Date(plan.endDate), "yyyy-MM-dd"),
+        start: format(start, "yyyy-MM-dd"),
+        end: format(end, "yyyy-MM-dd"),
         color: "#5B4FFF",
         extendedProps: {
           type: 'plan',
           data: plan
         }
-      }));
+      })});
 
       // Eventos normales (sesiones)
       const sessionEvents = plansData.flatMap((plan: TrainingPlan) =>
         plan.sessions.map((session) => ({
           title: `${getAthleteName(plan)}: ${session.sessionName}`,
-          start: session.date,
-          end: session.date,
+          start: format(parseDate(session.date) || new Date(), "yyyy-MM-dd"),
+          end: format(parseDate(session.date) || new Date(), "yyyy-MM-dd"),
           color: "#333369",
           textColor: "#fff",
           extendedProps: {

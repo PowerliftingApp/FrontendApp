@@ -103,15 +103,17 @@ export default function EditTrainingPlan() {
       return false;
     }
 
-    // Validar fechas de sesiones
+    // Validar fechas de sesiones (obligatorias y dentro del rango)
     for (let i = 0; i < plan.sessions.length; i++) {
       const session = plan.sessions[i];
-      if (session.date) {
-        const sessionDate = parseISO(session.date);
-        if (isBefore(sessionDate, plan.startDate) || isAfter(sessionDate, plan.endDate)) {
-          toast.error(`La fecha de la sesión "${session.sessionName || `Sesión ${i + 1}`}" debe estar entre las fechas del plan`);
-          return false;
-        }
+      if (!session.date) {
+        toast.error(`La sesión "${session.sessionName || `Sesión ${i + 1}`}" debe tener una fecha`);
+        return false;
+      }
+      const sessionDate = parseISO(session.date);
+      if (isBefore(sessionDate, plan.startDate) || isAfter(sessionDate, plan.endDate)) {
+        toast.error(`La fecha de la sesión "${session.sessionName || `Sesión ${i + 1}`}" debe estar entre las fechas del plan`);
+        return false;
       }
     }
 
