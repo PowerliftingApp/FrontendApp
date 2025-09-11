@@ -31,10 +31,9 @@ export default function Athletes() {
 
       const user = JSON.parse(userStr);
       setUser(user);
-      // Verificar que el usuario sea un coach
+      // Si es atleta, no bloqueamos: se mostrará la vista "Mi Coach"
       if (user.role !== "coach") {
-        toast.error("Solo los entrenadores pueden ver sus atletas");
-        navigate("/dashboard");
+        setIsLoading(false);
         return;
       }
 
@@ -92,6 +91,10 @@ export default function Athletes() {
     );
   }
 
+  if (user?.role === 'athlete') {
+    return <MyCoachView />;
+  }
+
   return (
     <div className="container mx-auto py-10">
       <div className="flex justify-between items-center">
@@ -122,6 +125,54 @@ export default function Athletes() {
         onClose={handleCloseDetailModal}
         athleteId={selectedAthleteId}
       />
+    </div>
+  );
+}
+
+function MyCoachView() {
+  const [coachInfo, setCoachInfo] = useState<any | null>(null);
+  const [coachLoading, setCoachLoading] = useState(true);
+
+  useEffect(() => {
+    const loadCoach = async () => {
+      try {
+        const res = await axiosInstance.get('/users/me/coach', {
+          headers: { Authorization: `Bearer ${sessionStorage.getItem('token')}` },
+        });
+        setCoachInfo(res.data?.coach || null);
+      } catch (e: any) {
+        console.error(e);
+        setCoachInfo(null);
+      } finally {
+        setCoachLoading(false);
+      }
+    };
+    loadCoach();
+  }, []);
+
+  return (
+    <div className="container mx-auto py-10 space-y-4">
+      <h1 className="text-2xl font-bold mb-2">Mi Coach</h1>
+      {coachLoading ? (
+        <p>Cargando información del entrenador...</p>
+      ) : coachInfo ? (
+        <section className="rounded-md border p-4 mt-8">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-lg font-semibold">{coachInfo.fullName}</h2>
+              <p className="text-sm text-muted-foreground">{coachInfo.email} • ID: {coachInfo.coachId}</p>
+            </div>
+          </div>
+          <div className="mt-3 text-sm text-muted-foreground">
+            Si necesitas cambiar de entrenador, contacta a soporte.
+          </div>
+        </section>
+      ) : (
+        <section className="rounded-md border p-4 border-l-4 border-l-amber-500 bg-amber-50/50 mt-8">
+          <h2 className="text-lg font-semibold">Aún no tienes un coach vinculado</h2>
+          <p className="text-sm text-muted-foreground">Pídele a tu entrenador que te vincule desde su panel.</p>
+        </section>
+      )}
     </div>
   );
 }

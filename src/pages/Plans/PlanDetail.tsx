@@ -7,6 +7,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 
 type PerformedSet = {
@@ -56,7 +58,8 @@ export default function PlanDetail() {
   const navigate = useNavigate();
   const [plan, setPlan] = useState<TrainingPlan | null>(null);
   const [loading, setLoading] = useState(true);
-  const [openExercise, setOpenExercise] = useState<string | null>(null);
+  const [openFeedbackExercise, setOpenFeedbackExercise] = useState<string | null>(null);
+  const [openSetsExercise, setOpenSetsExercise] = useState<string | null>(null);
   const [openNotesSessionId, setOpenNotesSessionId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -92,13 +95,15 @@ export default function PlanDetail() {
   const handleSubmitExercise = async (
     sessionId: string,
     exerciseId: string,
-    form: { completed: boolean; performanceComment?: string; athleteNotes?: string; media?: File | null }
+    form: { completed?: boolean; performanceComment?: string; athleteNotes?: string; media?: File | null }
   ) => {
     const data = new FormData();
     data.append('planId', String(id));
     data.append('sessionId', sessionId);
     data.append('exerciseId', exerciseId);
-    data.append('completed', String(form.completed));
+    if (typeof form.completed === 'boolean') {
+      data.append('completed', String(form.completed));
+    }
     if (form.performanceComment) data.append('performanceComment', form.performanceComment);
     if (form.athleteNotes) data.append('athleteNotes', form.athleteNotes);
     if (form.media) data.append('media', form.media);
@@ -111,7 +116,7 @@ export default function PlanDetail() {
       // refrescar
       const res = await axiosInstance.get(`/training-plans/${id}`);
       setPlan(res.data);
-      setOpenExercise(null);
+      setOpenFeedbackExercise(null);
     } catch (err: any) {
       console.error(err);
       toast.error('Error guardando feedback', { description: err?.response?.data?.message });
@@ -137,6 +142,57 @@ export default function PlanDetail() {
     }
   };
 
+  const {
+    totalSessions,
+    completedSessions,
+    totalExercises,
+    completedExercises,
+    totalSets,
+    completedSets,
+    progressSessionsPct,
+    totalDays,
+    daysLeft,
+  } = useMemo(() => {
+    if (!plan) {
+      return {
+        totalSessions: 0,
+        completedSessions: 0,
+        totalExercises: 0,
+        completedExercises: 0,
+        totalSets: 0,
+        completedSets: 0,
+        progressSessionsPct: 0,
+        totalDays: 0,
+        daysLeft: 0,
+      };
+    }
+    const totalSessions = plan.sessions.length;
+    const completedSessions = plan.sessions.filter(s => s.exercises.length > 0 && s.exercises.every(e => !!e.completed)).length;
+    const allExercises = plan.sessions.flatMap(s => s.exercises);
+    const totalExercises = allExercises.length;
+    const completedExercises = allExercises.filter(e => !!e.completed).length;
+    const totalSets = allExercises.reduce((acc, e) => acc + (e.performedSets?.length || 0), 0);
+    const completedSets = allExercises.reduce((acc, e) => acc + (e.performedSets?.filter(ps => !!ps.completed).length || 0), 0);
+    const progressSessionsPct = totalSessions ? Math.round((completedSessions / totalSessions) * 100) : 0;
+    const start = new Date(plan.startDate as any);
+    const end = new Date(plan.endDate as any);
+    const now = new Date();
+    const msPerDay = 1000 * 60 * 60 * 24;
+    const totalDays = Math.max(1, Math.ceil((end.getTime() - start.getTime()) / msPerDay));
+    const daysLeft = Math.max(0, Math.ceil((end.getTime() - now.getTime()) / msPerDay));
+    return {
+      totalSessions,
+      completedSessions,
+      totalExercises,
+      completedExercises,
+      totalSets,
+      completedSets,
+      progressSessionsPct,
+      totalDays,
+      daysLeft,
+    };
+  }, [plan]);
+
   if (loading || !plan) {
     return (
       <div className="flex items-center justify-center min-h-[300px]">
@@ -147,23 +203,62 @@ export default function PlanDetail() {
 
   return (
     <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle>{plan.name}</CardTitle>
-        </CardHeader>
-        <CardContent className="text-sm text-muted-foreground">
+      <div className="space-y-2">
+        <h2 className="text-2xl font-semibold mt-4">{plan.name}</h2>
+        <div className="text-sm text-muted-foreground">
           {new Date(plan.startDate).toLocaleDateString()} - {new Date(plan.endDate).toLocaleDateString()}
-        </CardContent>
-      </Card>
+        </div>
+        <div className="space-y-2">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+            <div className="rounded-md border p-3 bg-emerald-50 border-emerald-200">
+              <div className="text-xs text-muted-foreground">Sesiones</div>
+              <div className="text-lg font-semibold text-emerald-700">{completedSessions}/{totalSessions}</div>
+            </div>
+            <div className="rounded-md border p-3 bg-indigo-50 border-indigo-200">
+              <div className="text-xs text-muted-foreground">Ejercicios</div>
+              <div className="text-lg font-semibold text-indigo-700">{completedExercises}/{totalExercises}</div>
+            </div>
+            <div className="rounded-md border p-3 bg-sky-50 border-sky-200">
+              <div className="text-xs text-muted-foreground">Series</div>
+              <div className="text-lg font-semibold text-sky-700">{completedSets}/{totalSets}</div>
+            </div>
+            <div className="rounded-md border p-3 bg-purple-50 border-purple-200">
+              <div className="text-xs text-muted-foreground">Progreso</div>
+              <div className="text-lg font-semibold text-purple-700">{progressSessionsPct}%</div>
+            </div>
+            <div className="rounded-md border p-3 bg-zinc-50 border-zinc-200">
+              <div className="text-xs text-muted-foreground">Duración</div>
+              <div className="text-lg font-semibold text-zinc-700">{totalDays} días</div>
+            </div>
+            <div className="rounded-md border p-3 bg-amber-50 border-amber-200">
+              <div className="text-xs text-muted-foreground">Días restantes</div>
+              <div className="text-lg font-semibold text-amber-700">{daysLeft}</div>
+            </div>
+          </div>
+        </div>
+      </div>
 
       <div className="space-y-4">
+        <h2 className="text-xl font-semibold">Sesiones</h2>
         {plan.sessions.map((session) => {
           const disabled = isSessionCompleted(session);
+          const sessionKey = (session.sessionId || (session as any)._id || session.sessionName) as string;
+          const sessionStableId = (session.sessionId || (session as any)._id || '') as string;
           return (
-            <Card key={session.sessionId || session.sessionName} className={disabled ? 'opacity-60' : ''}>
+            <Card key={sessionKey} className={`border-l-4 ${disabled ? 'border-l-green-500' : 'border-l-amber-500'}`}>
               <CardHeader className="flex flex-row items-center justify-between">
-                <CardTitle>{session.sessionName}</CardTitle>
-                <Dialog open={openNotesSessionId === (session.sessionId || '')} onOpenChange={(o) => setOpenNotesSessionId(o ? (session.sessionId || '') : null)}>
+                <div className="max-w-lg">
+                  <div className="flex items-center gap-2">
+                    <CardTitle className="truncate">{session.sessionName}</CardTitle>
+                    <Badge className={disabled ? 'bg-green-500 text-white hover:bg-green-600' : 'bg-amber-500 text-white hover:bg-amber-600'}>
+                      {disabled ? 'Completada' : 'Pendiente'}
+                    </Badge>
+                  </div>
+                  {!!session.sessionNotes && (
+                    <div className="mt-1 text-xs text-muted-foreground whitespace-pre-wrap truncate">{session.sessionNotes}</div>
+                  )}
+                </div>
+                <Dialog open={openNotesSessionId === sessionStableId} onOpenChange={(o) => setOpenNotesSessionId(o ? sessionStableId : null)}>
                   <DialogTrigger asChild>
                     <Button variant="outline">Añadir notas de sesión</Button>
                   </DialogTrigger>
@@ -173,70 +268,99 @@ export default function PlanDetail() {
                     </DialogHeader>
                     <SessionNotesForm
                       defaultNotes={session.sessionNotes || ''}
-                      onSubmit={(notes) => handleSubmitSessionNotes(session.sessionId || '', notes)}
+                      onSubmit={(notes) => handleSubmitSessionNotes(sessionStableId, notes)}
                     />
                   </DialogContent>
                 </Dialog>
               </CardHeader>
               <CardContent className="space-y-3">
-                {session.exercises.map((ex) => (
-                  <div key={ex.exerciseId || ex.name} className="border rounded p-3">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <div className="font-medium">{ex.name}</div>
-                        <div className="text-xs text-muted-foreground">
-                          {ex.sets}x{ex.reps}
-                          {typeof ex.rpe === 'number' ? ` • RPE ${ex.rpe}` : ''}
-                          {typeof ex.weight === 'number' ? ` • ${ex.weight} kg` : ''}
+                <h4 className="text-sm font-medium">Ejercicios</h4>
+                {session.exercises.map((ex) => {
+                  const eid = (ex.exerciseId || (ex as any)._id || '') as string;
+                  return (
+                    <div key={ex.exerciseId || ex.name} className={`border rounded p-3 ${ex.completed ? 'border-green-500' : 'border-amber-300'}`}>
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <div className="font-medium">{ex.name}</div>
+                            <Badge className={ex.completed ? 'bg-green-500 text-white' : 'bg-amber-500 text-white'}>
+                              {ex.completed ? 'Completado' : 'Pendiente'}
+                            </Badge>
+                          </div>
+                          <div className="text-xs text-muted-foreground">
+                            {ex.sets}x{ex.reps}
+                            {typeof ex.rpe === 'number' ? ` • RPE ${ex.rpe}` : ''}
+                            {typeof ex.rir === 'number' ? ` • RIR ${ex.rir}` : ''}
+                            {typeof ex.rm === 'number' ? ` • RM ${ex.rm}` : ''}
+                            {typeof ex.weight === 'number' ? ` • ${ex.weight} kg` : ''}
+                            {ex.notes ? ` • ${ex.notes}` : ''}
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-2">
+                          <Dialog open={openSetsExercise === eid} onOpenChange={(o) => setOpenSetsExercise(o ? eid : null)}>
+                            <DialogTrigger asChild>
+                              <Button variant="outline">Editar series</Button>
+                            </DialogTrigger>
+                            <DialogContent>
+                              <DialogHeader>
+                                <DialogTitle>Series de {ex.name}</DialogTitle>
+                              </DialogHeader>
+                              <ExerciseSetsForm
+                                defaultSets={ex.performedSets}
+                                onSubmit={async (sets) => {
+                                  try {
+                                    await axiosInstance.patch('/training-plans/feedback/exercise-sets', {
+                                      planId: id,
+                                      sessionId: (session.sessionId || (session as any)._id || '') as string,
+                                      exerciseId: (ex.exerciseId || (ex as any)._id || '') as string,
+                                      sets: sets.map(s => ({
+                                        setId: s.setId || '',
+                                        completed: s.completed,
+                                        repsPerformed: s.repsPerformed,
+                                        loadUsed: s.loadUsed,
+                                        measureAchieved: s.measureAchieved,
+                                      })),
+                                    }, { headers: { Authorization: `Bearer ${sessionStorage.getItem('token')}` } });
+                                    toast.success('Series actualizadas');
+                                    const res = await axiosInstance.get(`/training-plans/${id}`);
+                                    setPlan(res.data);
+                                    setOpenSetsExercise(null);
+                                  } catch (err: any) {
+                                    console.error(err);
+                                    toast.error('Error actualizando series', { description: err?.response?.data?.message });
+                                  }
+                                }}
+                              />
+                            </DialogContent>
+                          </Dialog>
+
+                          <Dialog open={openFeedbackExercise === eid} onOpenChange={(o) => setOpenFeedbackExercise(o ? eid : null)}>
+                            <DialogTrigger asChild>
+                              {ex.completed ? (
+                                <Button variant="secondary">Editar feedback</Button>
+                              ) : (
+                                <span />
+                              )}
+                            </DialogTrigger>
+                            <DialogContent>
+                              <DialogHeader>
+                                <DialogTitle>Feedback de {ex.name}</DialogTitle>
+                              </DialogHeader>
+                              <ExerciseFeedbackForm
+                                defaultCompleted={!!ex.completed}
+                                defaultPerformanceComment={ex.performanceComment || ''}
+                                defaultAthleteNotes={ex.athleteNotes || ''}
+                                onSubmit={(payload) => {
+                                  const sid = (session.sessionId || (session as any)._id || '') as string;
+                                  const eid2 = (ex.exerciseId || (ex as any)._id || '') as string;
+                                  return handleSubmitExercise(sid, eid2, payload).then(() => setOpenFeedbackExercise(null));
+                                }}
+                              />
+                            </DialogContent>
+                          </Dialog>
                         </div>
                       </div>
-
-                      <Dialog open={openExercise === (ex.exerciseId || '')} onOpenChange={(o) => setOpenExercise(o ? (ex.exerciseId || '') : null)}>
-                        <DialogTrigger asChild>
-                          <Button variant={ex.completed ? 'secondary' : 'default'}>
-                            {ex.completed ? 'Editar feedback' : 'Marcar completado'}
-                          </Button>
-                        </DialogTrigger>
-                        <DialogContent>
-                          <DialogHeader>
-                            <DialogTitle>Feedback de {ex.name}</DialogTitle>
-                          </DialogHeader>
-                          <ExerciseFeedbackForm
-                            defaultCompleted={!!ex.completed}
-                            defaultPerformanceComment={ex.performanceComment || ''}
-                            defaultAthleteNotes={ex.athleteNotes || ''}
-                            defaultSets={ex.performedSets}
-                            onSubmit={(payload) => {
-                              const sid = (session.sessionId || (session as any)._id || '') as string;
-                              const eid = (ex.exerciseId || (ex as any)._id || '') as string;
-                              return handleSubmitExercise(sid, eid, payload);
-                            }}
-                            onSubmitSets={async (sets) => {
-                              try {
-                                await axiosInstance.patch('/training-plans/feedback/exercise-sets', {
-                                  planId: id,
-                                  sessionId: (session.sessionId || (session as any)._id || '') as string,
-                                  exerciseId: (ex.exerciseId || (ex as any)._id || '') as string,
-                                  sets: sets.map(s => ({
-                                    setId: s.setId || '',
-                                    completed: s.completed,
-                                    repsPerformed: s.repsPerformed,
-                                    loadUsed: s.loadUsed,
-                                    measureAchieved: s.measureAchieved,
-                                  })),
-                                }, { headers: { Authorization: `Bearer ${sessionStorage.getItem('token')}` } });
-                                toast.success('Series actualizadas');
-                                const res = await axiosInstance.get(`/training-plans/${id}`);
-                                setPlan(res.data);
-                              } catch (err: any) {
-                                console.error(err);
-                                toast.error('Error actualizando series', { description: err?.response?.data?.message });
-                              }
-                            }}
-                          />
-                        </DialogContent>
-                      </Dialog>
-                    </div>
 
                     {ex.mediaUrl && (
                       <div className="mt-2">
@@ -248,28 +372,32 @@ export default function PlanDetail() {
                       </div>
                     )}
 
-                    <div className="mt-3 grid grid-cols-4 gap-2 text-xs items-center">
-                      <div className="text-center font-medium text-muted-foreground">Serie</div>
-                      <div className="text-center font-medium text-muted-foreground">Reps</div>
-                      <div className="text-center font-medium text-muted-foreground">Peso</div>
-                      <div className="text-center font-medium text-muted-foreground">Completada</div>
-                      {ex.performedSets.map((ps) => (
-                        <React.Fragment key={ps.setId || ps.setNumber}>
-                          <div className="text-center">{ps.setNumber}</div>
-                          <div className="text-center">
-                            {typeof ps.repsPerformed === 'number' ? ps.repsPerformed : '-'}
-                          </div>
-                          <div className="text-center">
-                            {typeof ps.loadUsed === 'number' ? ps.loadUsed : '-'}
-                          </div>
-                          <div className="text-center">
-                            {ps.completed ? 'Sí' : '—'}
-                          </div>
-                        </React.Fragment>
-                      ))}
+                    <div className="mt-3">
+                      <div className="text-xs font-medium mb-1">Performed sets</div>
+                      <div className="grid grid-cols-4 gap-2 text-xs items-center">
+                        <div className="text-center font-medium text-muted-foreground">Serie</div>
+                        <div className="text-center font-medium text-muted-foreground">Repeticiones</div>
+                        <div className="text-center font-medium text-muted-foreground">Peso</div>
+                        <div className="text-center font-medium text-muted-foreground">Completada</div>
+                        {ex.performedSets.map((ps) => (
+                          <React.Fragment key={ps.setId || ps.setNumber}>
+                            <div className="text-center">{ps.setNumber}</div>
+                            <div className="text-center">
+                              {typeof ps.repsPerformed === 'number' ? ps.repsPerformed : '-'}
+                            </div>
+                            <div className="text-center">
+                              {typeof ps.loadUsed === 'number' ? ps.loadUsed : '-'}
+                            </div>
+                            <div className="text-center">
+                              {ps.completed ? 'Sí' : '—'}
+                            </div>
+                          </React.Fragment>
+                        ))}
+                      </div>
                     </div>
                   </div>
-                ))}
+                );
+              })}
               </CardContent>
             </Card>
           );
@@ -280,38 +408,28 @@ export default function PlanDetail() {
 }
 
 function ExerciseFeedbackForm({
-  defaultCompleted,
   defaultPerformanceComment,
   defaultAthleteNotes,
-  defaultSets,
   onSubmit,
-  onSubmitSets,
 }: {
   defaultCompleted: boolean;
   defaultPerformanceComment: string;
   defaultAthleteNotes: string;
-  defaultSets: PerformedSet[];
-  onSubmit: (data: { completed: boolean; performanceComment?: string; athleteNotes?: string; media?: File | null }) => void;
-  onSubmitSets: (sets: PerformedSet[]) => void;
+  onSubmit: (data: { completed?: boolean; performanceComment?: string; athleteNotes?: string; media?: File | null }) => void;
 }) {
-  const [completed, setCompleted] = useState(defaultCompleted);
   const [performanceComment, setPerformanceComment] = useState(defaultPerformanceComment);
   const [athleteNotes, setAthleteNotes] = useState(defaultAthleteNotes);
   const [media, setMedia] = useState<File | null>(null);
-  const [sets, setSets] = useState<PerformedSet[]>(defaultSets);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
   return (
     <form
       onSubmit={(e) => {
         e.preventDefault();
-        onSubmit({ completed, performanceComment, athleteNotes, media });
+        onSubmit({ performanceComment, athleteNotes, media });
       }}
       className="space-y-4"
     >
-      <div className="flex items-center gap-2">
-        <input id="completed" type="checkbox" checked={completed} onChange={(e) => setCompleted(e.target.checked)} />
-        <Label htmlFor="completed">Ejercicio completado</Label>
-      </div>
       <div className="grid gap-2">
         <Label>Comentario de desempeño</Label>
         <Input value={performanceComment} onChange={(e) => setPerformanceComment(e.target.value)} placeholder="¿Superaste RPE/RIR/RM?" />
@@ -322,53 +440,29 @@ function ExerciseFeedbackForm({
       </div>
       <div className="grid gap-2">
         <Label>Evidencia (imagen o video, opcional)</Label>
-        <Input type="file" accept="image/*,video/*" onChange={(e) => setMedia(e.target.files?.[0] || null)} />
+        <Input
+          type="file"
+          accept="image/*,video/*"
+          onChange={(e) => {
+            const file = e.target.files?.[0] || null;
+            setMedia(file);
+            if (previewUrl) URL.revokeObjectURL(previewUrl);
+            if (file) setPreviewUrl(URL.createObjectURL(file));
+            else setPreviewUrl(null);
+          }}
+        />
+        {previewUrl && (
+          <div className="mt-2">
+            {media && /\.(mp4|webm|ogg)$/i.test(media.name) ? (
+              <video src={previewUrl} className="w-full max-w-md" controls />
+            ) : (
+              <img src={previewUrl} className="w-full max-w-md rounded" />
+            )}
+          </div>
+        )}
       </div>
-      <div className="space-y-3">
-        <div className="grid grid-cols-5 gap-2 text-xs items-center">
-          <div className="text-center font-medium text-muted-foreground">Serie</div>
-          <div className="text-center font-medium text-muted-foreground">Reps</div>
-          <div className="text-center font-medium text-muted-foreground">Peso</div>
-          <div className="text-center font-medium text-muted-foreground">Medida</div>
-          <div className="text-center font-medium text-muted-foreground">OK</div>
-          {sets.map((s, i) => (
-            <React.Fragment key={s.setId || i}>
-              <div className="text-center">{s.setNumber}</div>
-              <div className="text-center">
-                <Input
-                  type="number"
-                  value={typeof s.repsPerformed === 'number' ? s.repsPerformed : ''}
-                  onChange={(e) => setSets(prev => prev.map((p, idx) => idx === i ? { ...p, repsPerformed: e.target.value ? parseInt(e.target.value) : null } : p))}
-                />
-              </div>
-              <div className="text-center">
-                <Input
-                  type="number"
-                  value={typeof s.loadUsed === 'number' ? s.loadUsed : ''}
-                  onChange={(e) => setSets(prev => prev.map((p, idx) => idx === i ? { ...p, loadUsed: e.target.value ? parseFloat(e.target.value) : null } : p))}
-                />
-              </div>
-              <div className="text-center">
-                <Input
-                  type="number"
-                  value={typeof s.measureAchieved === 'number' ? s.measureAchieved : ''}
-                  onChange={(e) => setSets(prev => prev.map((p, idx) => idx === i ? { ...p, measureAchieved: e.target.value ? parseFloat(e.target.value) : null } : p))}
-                />
-              </div>
-              <div className="text-center">
-                <input
-                  type="checkbox"
-                  checked={!!s.completed}
-                  onChange={(e) => setSets(prev => prev.map((p, idx) => idx === i ? { ...p, completed: e.target.checked } : p))}
-                />
-              </div>
-            </React.Fragment>
-          ))}
-        </div>
-        <div className="flex justify-end gap-2">
-          <Button type="button" variant="outline" onClick={() => onSubmitSets(sets)}>Guardar series</Button>
-          <Button type="submit">Guardar feedback</Button>
-        </div>
+      <div className="flex justify-end gap-2">
+        <Button type="submit">Guardar feedback</Button>
       </div>
     </form>
   );
@@ -395,4 +489,76 @@ function SessionNotesForm({ defaultNotes, onSubmit }: { defaultNotes: string; on
   );
 }
 
-
+function ExerciseSetsForm({ defaultSets, onSubmit }: { defaultSets: PerformedSet[]; onSubmit: (sets: PerformedSet[]) => void }) {
+  const [sets, setSets] = useState<PerformedSet[]>(defaultSets);
+  return (
+    <form
+      onSubmit={(e) => {
+        e.preventDefault();
+        onSubmit(sets);
+      }}
+      className="space-y-3"
+    >
+      <div className="grid grid-cols-5 gap-2 text-xs items-center">
+        <div className="text-center font-medium text-muted-foreground">Serie</div>
+        <div className="text-center font-medium text-muted-foreground">Reps</div>
+        <div className="text-center font-medium text-muted-foreground">Peso</div>
+        <div className="text-center font-medium text-muted-foreground">RPE</div>
+        <div className="text-center font-medium text-muted-foreground">Completada</div>
+        {sets.map((s, i) => (
+          <React.Fragment key={s.setId || i}>
+            <div className="text-center">{s.setNumber}</div>
+            <div className="text-center">
+              <Input
+                type="number"
+                min={0}
+                step={1}
+                value={typeof s.repsPerformed === 'number' ? s.repsPerformed : ''}
+                onChange={(e) => setSets(prev => prev.map((p, idx) => {
+                  if (idx !== i) return p;
+                  const v = e.target.value ? Math.max(0, parseInt(e.target.value)) : null;
+                  return { ...p, repsPerformed: v };
+                }))}
+              />
+            </div>
+            <div className="text-center">
+              <Input
+                type="number"
+                min={0}
+                step={0.5}
+                value={typeof s.loadUsed === 'number' ? s.loadUsed : ''}
+                onChange={(e) => setSets(prev => prev.map((p, idx) => {
+                  if (idx !== i) return p;
+                  const v = e.target.value ? Math.max(0, parseFloat(e.target.value)) : null;
+                  return { ...p, loadUsed: v };
+                }))}
+              />
+            </div>
+            <div className="text-center">
+              <Input
+                type="number"
+                min={0}
+                step={0.5}
+                value={typeof s.measureAchieved === 'number' ? s.measureAchieved : ''}
+                onChange={(e) => setSets(prev => prev.map((p, idx) => {
+                  if (idx !== i) return p;
+                  const v = e.target.value ? Math.max(0, parseFloat(e.target.value)) : null;
+                  return { ...p, measureAchieved: v };
+                }))}
+              />
+            </div>
+            <div className="flex items-center justify-center">
+              <Switch
+                checked={!!s.completed}
+                onCheckedChange={(v: boolean) => setSets(prev => prev.map((p, idx) => idx === i ? { ...p, completed: !!v } : p))}
+              />
+            </div>
+          </React.Fragment>
+        ))}
+      </div>
+      <div className="flex justify-end">
+        <Button type="submit">Guardar series</Button>
+      </div>
+    </form>
+  );
+}

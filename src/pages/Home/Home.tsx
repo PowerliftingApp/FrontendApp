@@ -30,19 +30,41 @@ interface SheetData {
 export async function fetchPlans() {
   const user = JSON.parse(sessionStorage.getItem("user") || "{}");
 
-  if (!user.coachId || user.role !== "coach") {
-    throw new Error("Usuario no autorizado");
-  }
-
   try {
-    const response = await axiosInstance.get(
-      `/training-plans/?coachId=${user.coachId}`
-    );
-    return response.data;
+    // Coach: ver planes de sus atletas
+    if (user.role === "coach" && user.coachId) {
+      const response = await axiosInstance.get(`/training-plans`, {
+        params: { coachId: user.coachId },
+        headers: { Authorization: `Bearer ${sessionStorage.getItem("token")}` },
+      });
+      return response.data;
+    }
+
+    // Athlete: ver solo sus planes
+    if (user.role === "athlete") {
+      let athleteId = user._id || user.id;
+      if (!athleteId) {
+        const profile = await axiosInstance.get(`/users/profile`, {
+          headers: { Authorization: `Bearer ${sessionStorage.getItem("token")}` },
+        });
+        athleteId = profile.data?.userId;
+      }
+      if (!athleteId) {
+        throw new Error("No se pudo determinar el atleta actual");
+      }
+      const response = await axiosInstance.get(`/training-plans`, {
+        params: { athleteId },
+        headers: { Authorization: `Bearer ${sessionStorage.getItem("token")}` },
+      });
+      return response.data;
+    }
+
+    throw new Error("Usuario no autorizado");
   } catch (error: any) {
     toast.error("Error al obtener planes", {
-      description: error.message,
+      description: error?.response?.data?.message || error.message,
     });
+    throw error;
   }
 }
 
@@ -92,9 +114,15 @@ export default function MyCalendar() {
       const plansData = await fetchPlans();
       if (!plansData) return;
 
+      // Helper para nombre del atleta (soporta object o string)
+      const getAthleteName = (plan: any) =>
+        plan?.athleteId && typeof plan.athleteId === 'object' && plan.athleteId.fullName
+          ? plan.athleteId.fullName
+          : 'Mi plan';
+
       // Eventos de fondo (planes)
       const planEvents = plansData.map((plan: TrainingPlan) => ({
-        title: `${plan.athleteId.fullName}: ${plan.name.toUpperCase()}`,
+        title: `${getAthleteName(plan)}: ${plan.name.toUpperCase()}`,
         start: format(new Date(plan.startDate), "yyyy-MM-dd"),
         end: format(new Date(plan.endDate), "yyyy-MM-dd"),
         color: "#5B4FFF",
@@ -107,7 +135,7 @@ export default function MyCalendar() {
       // Eventos normales (sesiones)
       const sessionEvents = plansData.flatMap((plan: TrainingPlan) =>
         plan.sessions.map((session) => ({
-          title: `${plan.athleteId.fullName}: ${session.sessionName}`,
+          title: `${getAthleteName(plan)}: ${session.sessionName}`,
           start: session.date,
           end: session.date,
           color: "#333369",
@@ -198,7 +226,11 @@ export default function MyCalendar() {
         <div className="pt-4 border-t">
           <Button 
             onClick={() => {
-              navigate(`/dashboard/training-plans/detail?id=${plan._id}`);
+              const user = JSON.parse(sessionStorage.getItem("user") || "{}");
+              const target = user?.role === 'athlete'
+                ? `/dashboard/plans/${plan._id}`
+                : `/dashboard/training-plans/detail?id=${plan._id}`;
+              navigate(target);
               setIsSheetOpen(false);
             }}
             className="w-full"
@@ -285,7 +317,7 @@ export default function MyCalendar() {
                         <div className="text-center font-medium text-muted-foreground">Serie</div>
                         <div className="text-center font-medium text-muted-foreground">Reps</div>
                         <div className="text-center font-medium text-muted-foreground">Carga</div>
-                        <div className="text-center font-medium text-muted-foreground">Medida</div>
+                        <div className="text-center font-medium text-muted-foreground">RPE</div>
                         
                         {exercise.performedSets.slice(0, 3).map((set, setIndex) => (
                           <React.Fragment key={setIndex}>
@@ -313,7 +345,12 @@ export default function MyCalendar() {
         <div className="pt-4 border-t">
           <Button 
             onClick={() => {
-              navigate(`/dashboard/training-plans/detail?id=${(session as any).planId}`);
+              const user = JSON.parse(sessionStorage.getItem("user") || "{}");
+              const planId = (session as any).planId;
+              const target = user?.role === 'athlete'
+                ? `/dashboard/plans/${planId}`
+                : `/dashboard/training-plans/detail?id=${planId}`;
+              navigate(target);
               setIsSheetOpen(false);
             }}
             variant="outline"

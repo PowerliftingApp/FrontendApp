@@ -179,7 +179,7 @@ export default function TrainingPlansDetail() {
                                   <div className="text-center font-medium text-muted-foreground">Serie</div>
                                   <div className="text-center font-medium text-muted-foreground">Reps</div>
                                   <div className="text-center font-medium text-muted-foreground">Carga</div>
-                                  <div className="text-center font-medium text-muted-foreground">Medida</div>
+                                  <div className="text-center font-medium text-muted-foreground">RPE</div>
                                   
                                   {exercise.performedSets.slice(0, 5).map((set, setIndex) => (
                                     <React.Fragment key={setIndex}>

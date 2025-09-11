@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router";
 import axiosInstance from "@/lib/axiosInstance";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -129,31 +129,31 @@ export default function Plans() {
 
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <Card>
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-8">
+        <Card className="bg-emerald-50 border-emerald-200">
           <CardHeader>
             <CardTitle>Planes activos</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold">{activePlans}</div>
+            <div className="text-3xl font-bold text-emerald-700">{activePlans}</div>
             <div className="text-sm text-muted-foreground">de {totalPlans} planes</div>
           </CardContent>
         </Card>
-        <Card>
+        <Card className="bg-sky-50 border-sky-200">
           <CardHeader>
             <CardTitle>Sesiones completadas</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold">{completedSessions}</div>
+            <div className="text-3xl font-bold text-sky-700">{completedSessions}</div>
             <div className="text-sm text-muted-foreground">de {totalSessions} sesiones</div>
           </CardContent>
         </Card>
-        <Card>
+        <Card className="bg-purple-50 border-purple-200">
           <CardHeader>
             <CardTitle>Progreso</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold">
+            <div className="text-3xl font-bold text-purple-700">
               {totalSessions > 0 ? Math.round((completedSessions / totalSessions) * 100) : 0}%
             </div>
             <div className="text-sm text-muted-foreground">completado</div>
@@ -161,7 +161,7 @@ export default function Plans() {
         </Card>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="space-y-3">
         {plans.map(plan => {
           const start = new Date(plan.startDate);
           const end = new Date(plan.endDate);
@@ -169,25 +169,21 @@ export default function Plans() {
           const done = plan.sessions.filter(s => s.exercises.length > 0 && s.exercises.every(e => !!e.completed)).length;
           const isActive = start <= new Date() && new Date() <= end;
           return (
-            <Card key={plan._id} className="flex flex-col">
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <CardTitle className="text-lg">{plan.name}</CardTitle>
-                  <Badge variant={isActive ? "default" : "secondary"}>
-                    {isActive ? "Activo" : "Inactivo"}
-                  </Badge>
-                </div>
-              </CardHeader>
-              <CardContent className="flex-1 space-y-2">
-                <div className="text-sm text-muted-foreground">
-                  {start.toLocaleDateString()} - {end.toLocaleDateString()}
-                </div>
+            <section key={plan._id} className={`rounded-md border p-4 border-l-4 ${isActive ? 'border-l-emerald-500' : 'border-l-zinc-300'} bg-background`}>
+              <header className="flex items-center justify-between">
+                <h3 className="text-lg font-medium truncate">{plan.name}</h3>
+                <Badge className={isActive ? 'bg-emerald-500 text-white' : 'bg-zinc-400 text-white'}>
+                  {isActive ? 'Activo' : 'Inactivo'}
+                </Badge>
+              </header>
+              <div className="mt-1 text-sm text-muted-foreground">
+                {start.toLocaleDateString()} - {end.toLocaleDateString()}
+              </div>
+              <div className="mt-2 flex items-center justify-between">
                 <div className="text-sm">Sesiones: {done}/{sessions}</div>
-                <Button className="mt-4" variant="outline" onClick={() => navigate(`/dashboard/plans/${plan._id}`)}>
-                  Ver detalle
-                </Button>
-              </CardContent>
-            </Card>
+                <Button variant="outline" onClick={() => navigate(`/dashboard/plans/${plan._id}`)}>Ver detalle</Button>
+              </div>
+            </section>
           );
         })}
       </div>
