@@ -17,6 +17,8 @@ import TrainingPlansDetail from "./pages/TrainingPlansDetail/TrainingPlansDetail
 import CreateTrainingPlan from "./pages/CreateTrainingPlan/CreateTrainingPlan.tsx";
 import EditTrainingPlan from "./pages/EditTrainingPlan/EditTrainingPlan.tsx";
 import Settings from "./pages/Settings/Settings.tsx";
+import Plans from "./pages/Plans/Plans.tsx";
+import PlanDetail from "./pages/Plans/PlanDetail.tsx";
 
 createRoot(document.getElementById("root")!).render(
   <BrowserRouter>
@@ -36,6 +38,8 @@ createRoot(document.getElementById("root")!).render(
       <Route path="/" element={<Dashboard />}>
         <Route path="/dashboard" element={<Home />} />
         <Route path="/dashboard/settings" element={<Settings />} />
+        <Route path="/dashboard/plans" element={<Plans />} />
+        <Route path="/dashboard/plans/:id" element={<PlanDetail />} />
         <Route path="/dashboard/athletes" element={<Athletes />} />
         <Route path="/dashboard/training-plans" element={<TrainingPlans />} />
         <Route path="/dashboard/templates" element={<Templates />} />
