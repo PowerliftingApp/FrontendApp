@@ -14,8 +14,6 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { useNavigate } from "react-router";
-
 import { useState } from "react";
 import { RegisterFormCoachSchema } from "../schemas/RegisterForm.schema";
 import axios from "axios";
@@ -31,7 +29,6 @@ export function RegisterFormCoach() {
     },
   });
 
-  const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
   const [isRegistered, setIsRegistered] = useState(false);
 

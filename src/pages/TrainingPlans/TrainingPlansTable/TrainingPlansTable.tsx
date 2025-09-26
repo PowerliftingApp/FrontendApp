@@ -51,7 +51,7 @@ export function TrainingPlansTable<TData, TValue>({
           <Link to="/dashboard/training-plans/create">Crear nuevo plan</Link>
         </Button>
       </div>
-      <div className="rounded-md border">
+      <div className="rounded-md border overflow-x-auto">
         <Table>
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (

@@ -8,9 +8,9 @@ export default function Dashboard() {
       <AppSidebar />
 
       {/* Contenido principal */}
-      <main className="flex-1 p-6">
+      <main className="flex-1 p-6 overflow-hidden">
         <SidebarTrigger />
-        <div className="mx-auto max-w-8xl">
+        <div className="mx-auto max-w-8xl h-full overflow-auto">
           <Outlet />
         </div>
       </main>

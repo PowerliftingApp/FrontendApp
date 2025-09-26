@@ -16,7 +16,9 @@ export default function Athletes() {
   const [user, setUser] = useState<any>(null);
   const [isLinkModalOpen, setIsLinkModalOpen] = useState(false);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
-  const [selectedAthleteId, setSelectedAthleteId] = useState<string | null>(null);
+  const [selectedAthleteId, setSelectedAthleteId] = useState<string | null>(
+    null
+  );
   const navigate = useNavigate();
 
   const fetchAthletes = async () => {
@@ -45,17 +47,21 @@ export default function Athletes() {
       }
 
       // Hacer la petición al endpoint
-      const response = await axiosInstance.get(`/users/athletes/${user.coachId}`, {
-        headers: {
-          Authorization: `Bearer ${sessionStorage.getItem("token")}`,
-        },
-      });
+      const response = await axiosInstance.get(
+        `/users/athletes/${user.coachId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${sessionStorage.getItem("token")}`,
+          },
+        }
+      );
 
       setAthletes(response.data);
     } catch (error: any) {
       console.error("Error al obtener atletas:", error);
       toast.error("Error al cargar los atletas", {
-        description: error.response?.data?.message || "Intenta nuevamente más tarde",
+        description:
+          error.response?.data?.message || "Intenta nuevamente más tarde",
       });
     } finally {
       setIsLoading(false);
@@ -91,12 +97,12 @@ export default function Athletes() {
     );
   }
 
-  if (user?.role === 'athlete') {
+  if (user?.role === "athlete") {
     return <MyCoachView />;
   }
 
   return (
-    <div className="container mx-auto py-10">
+    <div className="py-10">
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-bold mb-6">Tus Atletas</h1>
         {/* Mostrar el coach id de forma informativa */}
@@ -112,8 +118,11 @@ export default function Athletes() {
           </Button>
         </div>
       </div>
-      <AthletesTable columns={createColumns(handleViewDetails)} data={athletes} />
-      
+      <AthletesTable
+        columns={createColumns(handleViewDetails)}
+        data={athletes}
+      />
+
       <LinkAthleteModal
         isOpen={isLinkModalOpen}
         onClose={() => setIsLinkModalOpen(false)}
@@ -132,14 +141,19 @@ export default function Athletes() {
 function MyCoachView() {
   const [coachInfo, setCoachInfo] = useState<any | null>(null);
   const [coachLoading, setCoachLoading] = useState(true);
+  const [athleteEmail, setAthleteEmail] = useState<string | null>(null);
 
   useEffect(() => {
     const loadCoach = async () => {
       try {
-        const res = await axiosInstance.get('/users/me/coach', {
-          headers: { Authorization: `Bearer ${sessionStorage.getItem('token')}` },
+        const res = await axiosInstance.get("/users/me/coach", {
+          headers: {
+            Authorization: `Bearer ${sessionStorage.getItem("token")}`,
+          },
         });
         setCoachInfo(res.data?.coach || null);
+        const user = JSON.parse(sessionStorage.getItem("user") || "{}");
+        setAthleteEmail(user?.email || null);
       } catch (e: any) {
         console.error(e);
         setCoachInfo(null);
@@ -151,7 +165,7 @@ function MyCoachView() {
   }, []);
 
   return (
-    <div className="container mx-auto py-10 space-y-4">
+    <div className="mx-auto py-10 space-y-4">
       <h1 className="text-2xl font-bold mb-2">Mi Coach</h1>
       {coachLoading ? (
         <p>Cargando información del entrenador...</p>
@@ -160,7 +174,9 @@ function MyCoachView() {
           <div className="flex items-center justify-between">
             <div>
               <h2 className="text-lg font-semibold">{coachInfo.fullName}</h2>
-              <p className="text-sm text-muted-foreground">{coachInfo.email} • ID: {coachInfo.coachId}</p>
+              <p className="text-sm text-muted-foreground">
+                {coachInfo.email} • ID: {coachInfo.coachId}
+              </p>
             </div>
           </div>
           <div className="mt-3 text-sm text-muted-foreground">
@@ -169,8 +185,13 @@ function MyCoachView() {
         </section>
       ) : (
         <section className="rounded-md border p-4 border-l-4 border-l-amber-500 bg-amber-50/50 mt-8">
-          <h2 className="text-lg font-semibold">Aún no tienes un coach vinculado</h2>
-          <p className="text-sm text-muted-foreground">Pídele a tu entrenador que te vincule desde su panel.</p>
+          <h2 className="text-lg font-semibold">
+            Aún no tienes un coach vinculado
+          </h2>
+          <p className="text-sm text-muted-foreground">
+            Pídele a tu entrenador que te vincule desde su panel con este email:{" "}
+            <b> {athleteEmail}</b>
+          </p>
         </section>
       )}
     </div>

@@ -26,9 +26,12 @@ import {
   User2,
   Users,
   Settings as SettingsIcon,
+  Calendar,
 } from "lucide-react";
-import { Link, useNavigate } from "react-router";
+import { Link, useNavigate, useLocation } from "react-router";
 import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { AvatarImage } from "@/components/ui/avatar";
 
 // Menu items.
 const itemsCoach = [
@@ -36,6 +39,11 @@ const itemsCoach = [
     title: "Inicio",
     url: "/dashboard",
     icon: Home,
+  },
+  {
+    title: "Calendario",
+    url: "/dashboard/calendar",
+    icon: Calendar,
   },
   {
     title: "Planes de entrenamiento",
@@ -84,8 +92,13 @@ const itemsAthlete = [
 
 export function AppSidebar() {
   const user = JSON.parse(sessionStorage.getItem("user") || "null");
-
+  const location = useLocation();
   const navigate = useNavigate();
+
+  // Function to check if a menu item is active
+  const isActive = (url: string) => {
+    return location.pathname === url;
+  };
 
   if (!user) {
     navigate("/");
@@ -100,8 +113,10 @@ export function AppSidebar() {
 
   return (
     <Sidebar variant="sidebar">
-      <SidebarHeader />
-      <SidebarContent>
+      <SidebarHeader>
+        <img src="/logo.png" alt="logo" className="w-24 h-24" />
+      </SidebarHeader>
+      <SidebarContent className="bg-primary">
         <Collapsible defaultOpen className="group/collapsible">
           <SidebarGroup>
             <SidebarGroupContent>
@@ -109,8 +124,13 @@ export function AppSidebar() {
                 {user.role === "coach"
                   ? itemsCoach.map((item) => (
                       <SidebarMenuItem key={item.title}>
-                        <SidebarMenuButton asChild>
-                          <Link to={item.url}>
+                        <SidebarMenuButton
+                          asChild
+                          className={`sidebar-menu-item-hover ${
+                            isActive(item.url) ? "sidebar-menu-item-active" : ""
+                          }`}
+                        >
+                          <Link to={item.url} className="text-white">
                             <item.icon />
                             <span>{item.title}</span>
                           </Link>
@@ -119,8 +139,13 @@ export function AppSidebar() {
                     ))
                   : itemsAthlete.map((item) => (
                       <SidebarMenuItem key={item.title}>
-                        <SidebarMenuButton asChild>
-                          <Link to={item.url}>
+                        <SidebarMenuButton
+                          asChild
+                          className={`sidebar-menu-item-hover ${
+                            isActive(item.url) ? "sidebar-menu-item-active" : ""
+                          }`}
+                        >
+                          <Link to={item.url} className="text-white">
                             <item.icon />
                             <span>{item.title}</span>
                           </Link>
@@ -128,97 +153,22 @@ export function AppSidebar() {
                       </SidebarMenuItem>
                     ))}
               </SidebarMenu>
-
-              {/* <SidebarMenu>
-                <Collapsible className="group/collapsible">
-                  <SidebarMenuItem>
-                    <CollapsibleTrigger asChild>
-                      <SidebarMenuButton asChild>
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-2">
-                            <User className="w-4 h-4" />
-                            Usuarios
-                          </div>
-                          <ChevronDown className="w-4 h-4 transition-transform" />
-                        </div>
-                      </SidebarMenuButton>
-                    </CollapsibleTrigger>
-                    <CollapsibleContent>
-                      <SidebarMenuSub>
-                        <SidebarMenuSubItem className="hover:bg-gray-900 px-2 py-1 rounded-md group/subitem cursor-pointer">
-                          <Link
-                            to="/dashboard/users/create"
-                            className="flex items-center gap-2 group-hover/subitem:text-white"
-                          >
-                            <UserPlus className="w-4 h-4" />
-                            <span>Crear</span>
-                          </Link>
-                        </SidebarMenuSubItem>
-                        <SidebarMenuSubItem className="hover:bg-gray-900 px-2 py-1 rounded-md group/subitem cursor-pointer">
-                          <Link
-                            to="/dashboard/users/search"
-                            className="flex items-center gap-2 group-hover/subitem:text-white"
-                          >
-                            <Search className="w-4 h-4" />
-                            <span>Buscar</span>
-                          </Link>
-                        </SidebarMenuSubItem>
-                      </SidebarMenuSub>
-                    </CollapsibleContent>
-                  </SidebarMenuItem>
-                </Collapsible>
-              </SidebarMenu>
-              <SidebarMenu>
-                <Collapsible className="group/collapsible">
-                  <SidebarMenuItem>
-                    <CollapsibleTrigger asChild>
-                      <SidebarMenuButton asChild>
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-2">
-                            <User className="w-4 h-4" />
-                            Evaluaciones
-                          </div>
-                          <ChevronDown className="w-4 h-4 transition-transform" />
-                        </div>
-                      </SidebarMenuButton>
-                    </CollapsibleTrigger>
-                    <CollapsibleContent>
-                      <SidebarMenuSub>
-                        <SidebarMenuSubItem className="hover:bg-gray-900 px-2 py-1 rounded-md group/subitem cursor-pointer">
-                          <Link
-                            to="/dashboard/evaluations-list"
-                            className="flex items-center gap-2 group-hover/subitem:text-white"
-                          >
-                            <List className="w-4 h-4" />
-                            <span>Listado</span>
-                          </Link>
-                        </SidebarMenuSubItem>
-                        <SidebarMenuSubItem className="hover:bg-gray-900 px-2 py-1 rounded-md group/subitem cursor-pointer">
-                          <Link
-                            to="/dashboard/evaluation"
-                            className="flex items-center gap-2 group-hover/subitem:text-white"
-                          >
-                            <FilePlus2 className="w-4 h-4" />
-                            <span>Crear</span>
-                          </Link>
-                        </SidebarMenuSubItem>
-                      </SidebarMenuSub>
-                    </CollapsibleContent>
-                  </SidebarMenuItem>
-                </Collapsible>
-              </SidebarMenu>  */}
             </SidebarGroupContent>
           </SidebarGroup>
         </Collapsible>
         <SidebarGroup />
       </SidebarContent>
       <SidebarFooter>
-        <SidebarMenu>
+        <SidebarMenu className="bg-primary">
           <SidebarMenuItem>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <SidebarMenuButton className="cursor-pointer">
-                  <User2 /> {user?.fullName}
+                <SidebarMenuButton className="cursor-pointer sidebar-menu-item-hover text-white h-10">
+                  <Avatar>
+                    <AvatarImage src={user?.profilePicture ? `${import.meta.env.VITE_API_URL || 'http://localhost:3000/'}${user?.profilePicture.slice(1)}` : undefined} />
+                    <AvatarFallback>{user?.fullName?.split(" ")[0]?.charAt(0)}</AvatarFallback>
+                  </Avatar>{" "}
+                  {user?.fullName}
                   <ChevronUp className="ml-auto" />
                 </SidebarMenuButton>
               </DropdownMenuTrigger>
@@ -227,7 +177,11 @@ export function AppSidebar() {
                 className="w-[--radix-popper-anchor-width]"
               >
                 <DropdownMenuItem>
-                  <Button onClick={handleLogout} variant="destructive">
+                  <Button
+                    onClick={handleLogout}
+                    variant="destructive"
+                    className="text-white"
+                  >
                     Cerrar sesión
                   </Button>
                 </DropdownMenuItem>

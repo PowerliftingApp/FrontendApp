@@ -13,6 +13,7 @@ export interface PerformedSet {
   setNumber: number;
   repsPerformed: number | null;
   loadUsed: number | null;
+  completed: boolean;
   measureAchieved: number | null;
 }
 
@@ -21,12 +22,16 @@ export interface Exercise {
   name: string;
   sets: number;
   reps: number;
+  completed: boolean;
   rpe: number | null;
   rir: number | null;
   rm: number | null;
   notes: string | null;
   weight?: number | null;
   performedSets: PerformedSet[];
+  performanceComment: string | null;
+  athleteNotes: string | null;
+  mediaUrl: string | null;
 }
 
 export interface Session {
@@ -34,6 +39,8 @@ export interface Session {
   sessionName: string;
   date: string;
   exercises: Exercise[];
+  sessionNotes: string | null;
+  completed: boolean;
 }
 
 export interface TrainingPlan {

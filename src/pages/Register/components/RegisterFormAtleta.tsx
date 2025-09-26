@@ -14,14 +14,12 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { useNavigate } from "react-router";
 
 import { useState } from "react";
 import { RegisterFormAtletaSchema } from "../schemas/RegisterForm.schema";
 
 import axios from "axios";
 import { toast } from "sonner";
-import { set } from "date-fns";
 
 export function RegisterFormAtleta() {
   const form = useForm<z.infer<typeof RegisterFormAtletaSchema>>({
@@ -33,7 +31,6 @@ export function RegisterFormAtleta() {
     },
   });
 
-  const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
   const [isRegistered, setIsRegistered] = useState(false);
 
