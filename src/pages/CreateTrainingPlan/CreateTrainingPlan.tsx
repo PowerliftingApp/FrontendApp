@@ -144,7 +144,9 @@ export default function CreateTrainingPlan() {
     const newSession: Session = {
       sessionName: "",
       date: "",
-      exercises: []
+      exercises: [],
+      sessionNotes: null,
+      completed: false
     };
     setPlan(prev => ({
       ...prev,
@@ -173,12 +175,16 @@ export default function CreateTrainingPlan() {
       name: "",
       sets: 0,
       reps: 0,
+      completed: false,
       rpe: null,
       rir: null,
       rm: null,
       notes: null,
       weight: null,
-      performedSets: []
+      performedSets: [],
+      performanceComment: null,
+      athleteNotes: null,
+      mediaUrl: null
     };
     setPlan(prev => ({
       ...prev,

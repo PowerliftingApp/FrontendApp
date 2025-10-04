@@ -50,7 +50,7 @@ export default function Home() {
         });
 
         // Obtener planes de entrenamiento
-        const plansResponse = await axios.get(`/training-plans?coachId=${user._id}`, {
+        const plansResponse = await axios.get(`/training-plans?coachId=${user.coachId}`, {
           headers: { Authorization: `Bearer ${token}` }
         });
 
@@ -62,6 +62,9 @@ export default function Home() {
         const completedSessions = plans.reduce((total: number, plan: any) => {
           return total + (plan.sessions?.filter((s: any) => s.completed)?.length || 0);
         }, 0);
+
+        console.log("PLANS", plans);
+        console.log("ATHLETES", athletes);
 
         // Calcular tasa de completitud
         const totalSessions = plans.reduce((total: number, plan: any) => {

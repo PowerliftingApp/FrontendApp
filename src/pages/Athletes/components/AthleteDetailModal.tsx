@@ -7,10 +7,10 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import axiosInstance from "@/lib/axiosInstance";
 import { toast } from "sonner";
 import { 
@@ -41,6 +41,7 @@ interface AthleteDetails {
   role: string;
   status: string;
   coach: string;
+  profilePicture?: string;
   joinDate: string;
   daysSinceJoin: number;
   stats: {
@@ -122,6 +123,15 @@ export function AthleteDetailModal({ isOpen, onClose, athleteId }: AthleteDetail
     }
   };
 
+  const getInitials = (name: string) => {
+    return name
+      .split(' ')
+      .map(word => word.charAt(0))
+      .join('')
+      .toUpperCase()
+      .slice(0, 2);
+  };
+
   if (!isOpen) return null;
 
   return (
@@ -150,6 +160,18 @@ export function AthleteDetailModal({ isOpen, onClose, athleteId }: AthleteDetail
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
+                {/* Foto de Perfil */}
+                <div className="flex justify-center">
+                  <Avatar className="h-24 w-24">
+                    <AvatarImage
+                      src={athlete.profilePicture ? `${axiosInstance.defaults.baseURL}/uploads/${athlete.profilePicture}` : undefined}
+                      alt={`Foto de perfil de ${athlete.fullName}`}
+                    />
+                    <AvatarFallback className="text-lg font-semibold">
+                      {getInitials(athlete.fullName)}
+                    </AvatarFallback>
+                  </Avatar>
+                </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <div className="flex items-center gap-2">

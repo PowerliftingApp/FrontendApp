@@ -100,8 +100,9 @@ export function AppSidebar() {
     return location.pathname === url;
   };
 
-  if (!user) {
+  if (!user || !user.role) {
     navigate("/");
+    return
   }
 
   const handleLogout = () => {

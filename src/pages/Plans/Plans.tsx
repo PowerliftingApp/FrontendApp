@@ -169,11 +169,11 @@ export default function Plans() {
           const done = plan.sessions.filter(s => s.exercises.length > 0 && s.exercises.every(e => !!e.completed)).length;
           const isActive = start <= new Date() && new Date() <= end;
           return (
-            <section key={plan._id} className={`rounded-md border p-4 border-l-4 ${isActive ? 'border-l-emerald-500' : 'border-l-zinc-300'} bg-background`}>
+            <section key={plan._id} className={`rounded-md border p-4 border-l-4 ${isActive ? 'border-l-emerald-500' : 'border-l-destructive/50'} bg-background`}>
               <header className="flex items-center justify-between">
                 <h3 className="text-lg font-medium truncate">{plan.name}</h3>
-                <Badge className={isActive ? 'bg-emerald-500 text-white' : 'bg-zinc-400 text-white'}>
-                  {isActive ? 'Activo' : 'Inactivo'}
+                <Badge className={isActive ? 'bg-emerald-500 text-white' : 'bg-destructive/50 text-white'}>
+                  {isActive ? 'A tiempo' : 'Atrasado'}
                 </Badge>
               </header>
               <div className="mt-1 text-sm text-muted-foreground">
