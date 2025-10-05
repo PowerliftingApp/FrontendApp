@@ -18,14 +18,14 @@ interface DashboardChartsProps {
     completed: number;
     scheduled: number;
   }>;
-  athleteDistribution: Array<{
+  sessionDistribution: Array<{
     name: string;
     value: number;
     color: string;
   }>;
 }
 
-export function DashboardCharts({ weeklyProgress, athleteDistribution }: DashboardChartsProps) {
+export function DashboardCharts({ weeklyProgress, sessionDistribution }: DashboardChartsProps) {
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
       {/* Gráfico de progreso semanal */}
@@ -76,16 +76,16 @@ export function DashboardCharts({ weeklyProgress, athleteDistribution }: Dashboa
         </CardContent>
       </Card>
 
-      {/* Gráfico circular de distribución */}
+      {/* Gráfico circular de distribución de sesiones */}
       <Card className="col-span-1">
         <CardHeader>
-          <CardTitle className="text-lg font-semibold">Distribución de Atletas</CardTitle>
+          <CardTitle className="text-lg font-semibold">Estado de Sesiones</CardTitle>
         </CardHeader>
         <CardContent>
           <ResponsiveContainer width="100%" height={300}>
             <PieChart>
               <Pie
-                data={athleteDistribution}
+                data={sessionDistribution}
                 cx="50%"
                 cy="50%"
                 innerRadius={60}
@@ -93,7 +93,7 @@ export function DashboardCharts({ weeklyProgress, athleteDistribution }: Dashboa
                 paddingAngle={5}
                 dataKey="value"
               >
-                {athleteDistribution.map((entry, index) => (
+                {sessionDistribution.map((entry, index) => (
                   <Cell key={`cell-${index}`} fill={entry.color} />
                 ))}
               </Pie>
@@ -107,13 +107,15 @@ export function DashboardCharts({ weeklyProgress, athleteDistribution }: Dashboa
             </PieChart>
           </ResponsiveContainer>
           <div className="flex flex-wrap justify-center gap-4 mt-4">
-            {athleteDistribution.map((entry, index) => (
+            {sessionDistribution.map((entry, index) => (
               <div key={index} className="flex items-center gap-2">
                 <div
                   className="w-3 h-3 rounded-full"
                   style={{ backgroundColor: entry.color }}
                 />
-                <span className="text-sm text-muted-foreground">{entry.name}</span>
+                <span className="text-sm text-muted-foreground">
+                  {entry.name}: {entry.value}
+                </span>
               </div>
             ))}
           </div>

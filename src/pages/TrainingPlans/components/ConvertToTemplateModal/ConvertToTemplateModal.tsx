@@ -163,7 +163,7 @@ export default function ConvertToTemplateModal({
             />
           </div>
 
-          <div className="p-3 bg-gray-50 border rounded-md">
+          <div className="p-3 bg-secondary/20 border rounded-md">
             <p className="text-sm text-gray-600">
               <strong>Plan original:</strong> {planName}
             </p>

@@ -24,7 +24,7 @@ export default function TemplateDetailModal({ template, children }: TemplateDeta
       <DialogTrigger asChild>
         {children}
       </DialogTrigger>
-      <DialogContent className="max-w-4xl max-h-[80vh]">
+      <DialogContent className="lg:max-w-4xl max-h-[80vh]">
         <DialogHeader>
           <DialogTitle className="text-xl">{template.name}</DialogTitle>
           <DialogDescription>
@@ -119,7 +119,7 @@ export default function TemplateDetailModal({ template, children }: TemplateDeta
                         
                         <div className="grid gap-3">
                           {session.exercises.map((exercise, exerciseIndex) => (
-                            <div key={exerciseIndex} className="bg-muted/50 rounded p-3">
+                            <div key={exerciseIndex} className="bg-transparent rounded p-3">
                               <div className="flex items-center justify-between mb-2">
                                 <h5 className="font-medium">{exercise.name}</h5>
                                 <div className="flex gap-2 text-sm text-muted-foreground">

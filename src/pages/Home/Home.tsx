@@ -24,6 +24,36 @@ interface Session {
   status: 'scheduled' | 'completed' | 'in_progress';
 }
 
+interface WeeklyProgress {
+  day: string;
+  completed: number;
+  scheduled: number;
+}
+
+interface SessionDistribution {
+  name: string;
+  value: number;
+  color: string;
+}
+
+// Datos por defecto para el gráfico semanal
+const defaultWeeklyProgress: WeeklyProgress[] = [
+  { day: 'Lun', completed: 0, scheduled: 0 },
+  { day: 'Mar', completed: 0, scheduled: 0 },
+  { day: 'Mié', completed: 0, scheduled: 0 },
+  { day: 'Jue', completed: 0, scheduled: 0 },
+  { day: 'Vie', completed: 0, scheduled: 0 },
+  { day: 'Sáb', completed: 0, scheduled: 0 },
+  { day: 'Dom', completed: 0, scheduled: 0 },
+];
+
+// Datos por defecto para distribución de sesiones
+const defaultSessionDistribution: SessionDistribution[] = [
+  { name: 'Completadas', value: 0, color: '#D72638' },
+  { name: 'Próximas (7 días)', value: 0, color: '#F5B700' },
+  { name: 'Pendientes', value: 0, color: '#5A5A5A' },
+];
+
 export default function Home() {
   const [dashboardData, setDashboardData] = useState({
     totalAthletes: 0,
@@ -34,6 +64,8 @@ export default function Home() {
     sessions: [] as Session[],
   });
 
+  const [weeklyProgress, setWeeklyProgress] = useState<WeeklyProgress[]>(defaultWeeklyProgress);
+  const [sessionDistribution, setSessionDistribution] = useState<SessionDistribution[]>(defaultSessionDistribution);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -49,29 +81,13 @@ export default function Home() {
           headers: { Authorization: `Bearer ${token}` }
         });
 
-        // Obtener planes de entrenamiento
-        const plansResponse = await axios.get(`/training-plans?coachId=${user.coachId}`, {
+        // Obtener métricas del dashboard del backend
+        const dashboardResponse = await axios.get(`/training-plans/dashboard/${user.coachId}`, {
           headers: { Authorization: `Bearer ${token}` }
         });
 
-        // Calcular métricas
         const athletes = athletesResponse.data;
-        const plans = plansResponse.data;
-
-        // Calcular sesiones completadas (simulado por ahora)
-        const completedSessions = plans.reduce((total: number, plan: any) => {
-          return total + (plan.sessions?.filter((s: any) => s.completed)?.length || 0);
-        }, 0);
-
-        console.log("PLANS", plans);
-        console.log("ATHLETES", athletes);
-
-        // Calcular tasa de completitud
-        const totalSessions = plans.reduce((total: number, plan: any) => {
-          return total + (plan.sessions?.length || 0);
-        }, 0);
-
-        const completionRate = totalSessions > 0 ? Math.round((completedSessions / totalSessions) * 100) : 0;
+        const dashboardStats = dashboardResponse.data;
 
         // Formatear atletas para el componente
         const formattedAthletes: Athlete[] = athletes.slice(0, 5).map((athlete: any) => ({
@@ -83,32 +99,41 @@ export default function Home() {
           progress: Math.floor(Math.random() * 100), // Simulado
         }));
 
-        // Crear sesiones simuladas para próximos días
-        const sessions: Session[] = [];
-        const today = new Date();
-
-        athletes.slice(0, 3).forEach((athlete: any, index: number) => {
-          const sessionDate = new Date(today);
-          sessionDate.setDate(today.getDate() + index);
-
-          sessions.push({
-            id: `session-${index}`,
-            athleteName: athlete.fullName,
-            sessionName: ['Fuerza Superior', 'Fuerza Inferior', 'Core & Estabilidad'][index % 3],
-            date: sessionDate.toISOString(),
-            time: ['09:00', '14:00', '18:00'][index % 3],
-            status: index === 0 ? 'in_progress' : 'scheduled' as const,
-          });
-        });
+        // Formatear sesiones próximas del backend
+        const formattedSessions: Session[] = (dashboardStats.upcomingSessions || []).map((session: any) => ({
+          id: session.id,
+          athleteName: session.athleteName,
+          sessionName: session.sessionName,
+          date: session.date,
+          time: session.time,
+          status: session.status as 'scheduled' | 'completed' | 'in_progress',
+        }));
 
         setDashboardData({
           totalAthletes: athletes.length,
-          activePlans: plans.filter((p: any) => !p.completed).length,
-          completedSessions,
-          completionRate,
+          activePlans: dashboardStats.stats.activePlans,
+          completedSessions: dashboardStats.stats.completedSessionsThisWeek,
+          completionRate: dashboardStats.stats.completionRate,
           athletes: formattedAthletes,
-          sessions,
+          sessions: formattedSessions,
         });
+
+        // Actualizar datos del progreso semanal desde el backend
+        // Si no hay datos, usar el array por defecto
+
+        console.log(dashboardStats.weeklyProgress);
+        setWeeklyProgress(
+          dashboardStats.weeklyProgress && dashboardStats.weeklyProgress.length > 0 
+            ? dashboardStats.weeklyProgress 
+            : defaultWeeklyProgress
+        );
+
+        // Actualizar distribución de sesiones desde el backend
+        setSessionDistribution(
+          dashboardStats.sessionDistribution && dashboardStats.sessionDistribution.length > 0
+            ? dashboardStats.sessionDistribution
+            : defaultSessionDistribution
+        );
       } catch (error) {
         console.error('Error fetching dashboard data:', error);
       } finally {
@@ -118,23 +143,6 @@ export default function Home() {
 
     fetchDashboardData();
   }, []);
-
-  // Datos para gráficos (simulados por ahora)
-  const weeklyProgress = [
-    { day: 'Lun', completed: 4, scheduled: 6 },
-    { day: 'Mar', completed: 6, scheduled: 7 },
-    { day: 'Mié', completed: 5, scheduled: 8 },
-    { day: 'Jue', completed: 7, scheduled: 6 },
-    { day: 'Vie', completed: 8, scheduled: 8 },
-    { day: 'Sáb', completed: 3, scheduled: 4 },
-    { day: 'Dom', completed: 2, scheduled: 3 },
-  ];
-
-  const athleteDistribution = [
-    { name: 'Avanzados', value: 35, color: '#D72638' },
-    { name: 'Intermedios', value: 45, color: '#F5B700' },
-    { name: 'Principiantes', value: 20, color: '#5A5A5A' },
-  ];
 
   if (loading) {
     return (
@@ -170,7 +178,7 @@ export default function Home() {
       {/* Gráficos */}
       <DashboardCharts
         weeklyProgress={weeklyProgress}
-        athleteDistribution={athleteDistribution}
+        sessionDistribution={sessionDistribution}
       />
 
       {/* Contenido en dos columnas */}

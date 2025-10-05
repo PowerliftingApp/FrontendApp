@@ -146,16 +146,15 @@ function MyCoachView() {
   useEffect(() => {
     const loadCoach = async () => {
       try {
+        const user = JSON.parse(sessionStorage.getItem("user") || "{}");
+        setAthleteEmail(user?.email || null);
         const res = await axiosInstance.get("/users/me/coach", {
           headers: {
             Authorization: `Bearer ${sessionStorage.getItem("token")}`,
           },
         });
         setCoachInfo(res.data?.coach || null);
-        const user = JSON.parse(sessionStorage.getItem("user") || "{}");
-        setAthleteEmail(user?.email || null);
       } catch (e: any) {
-        console.error(e);
         setCoachInfo(null);
       } finally {
         setCoachLoading(false);
@@ -180,7 +179,7 @@ function MyCoachView() {
             </div>
           </div>
           <div className="mt-3 text-sm text-muted-foreground">
-            Si necesitas cambiar de entrenador, contacta a soporte.
+            Si necesitas cambiar de entrenador, pidele a tu entrenador actual que te desvincule o contacta a soporte.
           </div>
         </section>
       ) : (

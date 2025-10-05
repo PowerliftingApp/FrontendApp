@@ -294,7 +294,7 @@ export default function MyCalendar() {
           <h4 className="font-medium text-sm text-muted-foreground">Ejercicios de la Sesión</h4>
           <div className="space-y-3 max-h-96 overflow-y-auto">
             {session.exercises.map((exercise, exerciseIndex) => (
-              <Card key={exerciseIndex} className="bg-muted/30">
+              <Card key={exerciseIndex} className="bg-transparent">
                 <CardHeader className="pb-2">
                   <div className="flex items-center justify-between">
                     <CardTitle className="text-sm">{exercise.name}</CardTitle>

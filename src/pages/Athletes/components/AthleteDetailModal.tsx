@@ -164,7 +164,7 @@ export function AthleteDetailModal({ isOpen, onClose, athleteId }: AthleteDetail
                 <div className="flex justify-center">
                   <Avatar className="h-24 w-24">
                     <AvatarImage
-                      src={athlete.profilePicture ? `${axiosInstance.defaults.baseURL}/uploads/${athlete.profilePicture}` : undefined}
+                      src={athlete.profilePicture ? `${axiosInstance.defaults.baseURL}${athlete.profilePicture.slice(1)}` : undefined}
                       alt={`Foto de perfil de ${athlete.fullName}`}
                     />
                     <AvatarFallback className="text-lg font-semibold">

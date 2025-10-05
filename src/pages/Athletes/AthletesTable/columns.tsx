@@ -2,6 +2,7 @@
 
 import { ColumnDef } from "@tanstack/react-table";
 import { Button } from "@/components/ui/button";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Eye, Ban } from "lucide-react";
 import axiosInstance from "@/lib/axiosInstance";
 import { toast } from "sonner";
@@ -23,6 +24,7 @@ export interface Athlete {
   email: string;
   role: string;
   coach: string;
+  profilePicture?: string;
 }
 
 export const createColumns = (onViewDetails: (athleteId: string) => void): ColumnDef<Athlete>[] => [
@@ -33,6 +35,32 @@ export const createColumns = (onViewDetails: (athleteId: string) => void): Colum
   {
     accessorKey: "fullName",
     header: "Nombre del Atleta",
+    cell: ({ row }) => {
+      const athlete = row.original;
+      const initials = athlete.fullName
+        .split(' ')
+        .map(name => name[0])
+        .join('')
+        .toUpperCase()
+        .slice(0, 2);
+      
+      return (
+        <div className="flex items-center gap-3">
+          <Avatar className="h-8 w-8">
+            {athlete.profilePicture && (
+              <AvatarImage 
+                src={`${import.meta.env.VITE_API_URL || 'http://localhost:3000'}${athlete.profilePicture.slice(1)}`} 
+                alt={athlete.fullName}
+              />
+            )}
+            <AvatarFallback className="text-xs bg-primary/10 text-primary">
+              {initials}
+            </AvatarFallback>
+          </Avatar>
+          <span>{athlete.fullName}</span>
+        </div>
+      );
+    },
   },
   {
     accessorKey: "email",
@@ -56,6 +84,7 @@ export const createColumns = (onViewDetails: (athleteId: string) => void): Colum
             }
           );
           toast.success("Atleta desvinculado correctamente");
+          window.location.reload();
         } catch (error: any) {
           toast.error("No se pudo desvincular al atleta", {
             description: error?.response?.data?.message || "Intenta nuevamente",
