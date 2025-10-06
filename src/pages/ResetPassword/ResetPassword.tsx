@@ -1,8 +1,6 @@
 import { useEffect, useState } from "react";
 
 import { ResetPasswordForm } from "./components/ResetPasswordForm";
-import axios from "axios";
-import { toast } from "sonner";
 import { useNavigate, useSearchParams } from "react-router";
 
 export default function ResetPassword() {

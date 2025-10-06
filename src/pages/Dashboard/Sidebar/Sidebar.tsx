@@ -23,7 +23,6 @@ import {
   File,
   Home,
   SquareChartGantt,
-  User2,
   Users,
   Settings as SettingsIcon,
   Calendar,
