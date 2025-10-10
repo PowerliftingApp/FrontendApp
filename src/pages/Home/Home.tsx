@@ -3,6 +3,7 @@ import { DashboardKPIs } from '@/components/DashboardKPIs';
 import { DashboardCharts } from '@/components/DashboardCharts';
 import { RecentAthletes } from '@/components/RecentAthletes';
 import { UpcomingSessions } from '@/components/UpcomingSessions';
+import AthleteDashboard from '@/pages/AthleteDashboard/AthleteDashboard';
 import axios from '@/lib/axiosInstance';
 
 interface Athlete {
@@ -67,6 +68,7 @@ export default function Home() {
   const [weeklyProgress, setWeeklyProgress] = useState<WeeklyProgress[]>(defaultWeeklyProgress);
   const [sessionDistribution, setSessionDistribution] = useState<SessionDistribution[]>(defaultSessionDistribution);
   const [loading, setLoading] = useState(true);
+  const [userRole, setUserRole] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchDashboardData = async () => {
@@ -74,6 +76,16 @@ export default function Home() {
         const user = JSON.parse(sessionStorage.getItem('user') || '{}');
         const token = sessionStorage.getItem('token');
 
+        // Establecer el rol del usuario
+        setUserRole(user.role);
+
+        // Si es atleta, no necesitamos cargar datos del dashboard de coach
+        if (user.role === 'athlete') {
+          setLoading(false);
+          return;
+        }
+
+        // Solo cargar datos del dashboard de coach si es coach
         if (!user.coachId) return;
 
         // Obtener atletas
@@ -155,6 +167,12 @@ export default function Home() {
     );
   }
 
+  // Si es atleta, mostrar el dashboard de atleta
+  if (userRole === 'athlete') {
+    return <AthleteDashboard />;
+  }
+
+  // Si es coach, mostrar el dashboard de coach
   return (
     <div className="space-y-6">
       {/* Header */}
